@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colorado Hunting Map</title>
+
+  <style>
+    html, body { margin: 0; height: 100%; font-family: Arial, sans-serif; }
+    #app { display: flex; height: 100%; }
+    #sidebar {
+      width: 285px; padding: 18px; overflow-y: auto;
+      background: #17232d; color: white; box-sizing: border-box;
+    }
+    #map { flex: 1; min-width: 0; }
+    h2 { font-size: 21px; margin-top: 0; }
+    h3 { font-size: 15px; margin-top: 24px; }
+    label { display: block; margin: 14px 0; cursor: pointer; }
+    input { margin-right: 8px; }
+    #status { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
+    #info { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+    .note { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
+    @media(max-width:650px) {
+      #sidebar { width: 190px; padding: 12px; }
+      h2 { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <h2>Colorado Hunting Map</h2>
+    <p class="note">CPW GIS layers with Google Maps terrain and satellite views.</p>
+
+    <h3>Map layers</h3>
+    <label><input type="checkbox" id="gmu" checked> GMU boundaries</label>
+    <label><input type="checkbox" id="public" checked> CPW public-access properties</label>
+    <label><input type="checkbox" id="wia"> Walk-In Access</label>
+    <label><input type="checkbox" id="elk"> Elk DAUs</label>
+    <label><input type="checkbox" id="deer"> Deer DAUs</label>
+
+    <h3>Data status</h3>
+    <div id="status">Loading CPW data…</div>
+
+    <h3>Selected feature</h3>
+    <div id="info">Click a mapped boundary or property.</div>
+
+    <p class="note">
+      Always confirm current access rules, season dates, licenses,
+      and legal unit boundaries with Colorado Parks and Wildlife.
+      Public-access designation does not guarantee access from
+      a particular road or across neighboring private land.
+    </p>
+  </aside>
+  <div id="map"></div>
+</div>
+
+<script>
+const CPW =
+  "https://services5.arcgis.com/ttNGmDvKQA7oeDQ3/ArcGIS/rest/services/CPWAdminData/FeatureServer";
+
+const layers = {
+  gmu: {
+    id: 6, name: "Big-game GMU",
+    color: "#d946ef", opacity: 0.04
+  },
+  public: {
+    id: 5, name: "CPW public-access property",
+    color: "#16a34a", opacity: 0.25
+  },
+  wia: {
+    id: 12, name: "Walk-In Access",
+    color: "#f59e0b", opacity: 0.24
+  },
+  elk: {
+    id: 23, name: "Elk DAU",
+    color: "#dc2626", opacity: 0.10
+  },
+  deer: {
+    id: 22, name: "Deer DAU",
+    color: "#2563eb", opacity: 0.10
+  }
+};
+
+let map;
+let infoWindow;
+const geoLayers = {};
+const loading = {};
+
+async function loadLayer(key) {
+  if (geoLayers[key]) return;
+  if (loading[key]) return loading[key];
+
+  loading[key] = (async () => {
+    const cfg = layers[key];
+    const params = new URLSearchParams({
+      where: "1=1",
+      outFields: "*",
+      outSR: "4326",
+      returnGeometry: "true",
+      f: "geojson"
+    });
+
+    const url = `${CPW}/${cfg.id}/query?${params}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const geojson = await response.json();
+    if (geojson.error) {
+      throw new Error(geojson.error.message || "CPW service error");
+    }
+    if (!geojson.features) {
+      throw new Error("The service returned no GeoJSON features.");
+    }
+
+    const dataLayer = new google.maps.Data();
+    dataLayer.addGeoJson(geojson);
+
+    dataLayer.setStyle({
+      fillColor: cfg.color,
+      fillOpacity: cfg.opacity,
+      strokeColor: cfg.color,
+      strokeOpacity: 0.95,
+      strokeWeight: key === "gmu" ? 2 : 1,
+      clickable: true,
+      visible: document.getElementById(key).checked
+    });
+
+    dataLayer.addListener("click", event => {
+      const props = {};
+      event.feature.forEachProperty((value, name) => {
+        props[name] = value;
+      });
+
+      const title = `${cfg.name} — ${Object.entries(props)
+        .find(([k, v]) =>
+          /GMUID|ELKDAU|DEERDAU|PROPNAME|NAME/i.test(k) &&
+          v !== null && v !== ""
+        )?.[1] ?? "Feature details"}`;
+
+      const box = document.createElement("div");
+      const heading = document.createElement("strong");
+      heading.textContent = title;
+      box.appendChild(heading);
+
+      Object.entries(props).slice(0, 12).forEach(([key, value]) => {
+        const row = document.createElement("div");
+        row.textContent = `${key}: ${value ?? ""}`;
+        box.appendChild(row);
+      });
+
+      infoWindow.setContent(box);
+      infoWindow.setPosition(event.latLng);
+      infoWindow.open({ map });
+    });
+
+    geoLayers[key] = dataLayer;
+    updateStatus(`${cfg.name} loaded (${geojson.features.length} features).`);
+  })();
+
+  try {
+    await loading[key];
+  } finally {
+    delete loading[key];
+  }
+}
+
+function updateStatus(message) {
+  const status = document.getElementById("status");
+  const row = document.createElement("div");
+  row.textContent = message;
+  status.appendChild(row);
+}
+
+async function initMap() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 39.0, lng: -105.5 },
+    zoom: 7,
+    mapTypeId: "terrain",
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      mapTypeIds: ["roadmap", "terrain", "satellite", "hybrid"]
+    },
+    streetViewControl: false
+  });
+
+  infoWindow = new google.maps.InfoWindow();
+
+  for (const key of Object.keys(layers)) {
+    document.getElementById(key).addEventListener("change", async e => {
+      try {
+        if (e.target.checked) await loadLayer(key);
+        if (geoLayers[key]) {
+          geoLayers[key].setStyle({
+            fillColor: layers[key].color,
+            fillOpacity: layers[key].opacity,
+            strokeColor: layers[key].color,
+            strokeOpacity: 0.95,
+            strokeWeight: key === "gmu" ? 2 : 1,
+            clickable: true,
+            visible: e.target.checked
+          });
+        }
+      } catch (error) {
+        updateStatus(`${layers[key].name}: ${error.message}`);
+      }
+    });
+  }
+
+  // Load the default visible layers.
+  for (const key of ["gmu", "public"]) {
+    try {
+      await loadLayer(key);
+    } catch (error) {
+      updateStatus(`${layers[key].name}: ${error.message}`);
+    }
+  }
+}
+
+window.initMap = initMap;
+</script>
+
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+</script>
+</body>
+</html>

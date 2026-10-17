@@ -1,0 +1,538 @@
+:root {
+    --hunt-green: #24452e;
+    --hunt-green-dark: #172f20;
+    --hunt-green-light: #edf3e9;
+    --hunt-gold: #d8a75a;
+    --hunt-border: #dce5da;
+    --hunt-text: #26332a;
+    --hunt-muted: #6b776d;
+  }
+
+  body {
+    background: #f5f7f3;
+    color: var(--hunt-text);
+  }
+
+  .hunt-page {
+    padding-bottom: 4rem;
+  }
+
+  /* Hero */
+  .hunt-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 370px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1.5rem;
+    border-radius: 22px;
+    color: #fff;
+    text-align: center;
+    background:
+      linear-gradient(
+        115deg,
+        rgba(14, 34, 22, 0.92),
+        rgba(24, 54, 35, 0.66)
+      ),
+      url("{% static 'img/rmc.jpeg' %}") center 48% / cover no-repeat;
+    box-shadow: 0 16px 40px rgba(27, 47, 31, 0.16);
+  }
+
+  .hunt-hero-content {
+    max-width: 760px;
+  }
+
+  .hunt-eyebrow {
+    display: inline-block;
+    padding: 8px 14px;
+    margin-bottom: 1.1rem;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    color: #f5e5bf;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .hunt-hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.6rem);
+    font-weight: 850;
+    letter-spacing: -0.045em;
+    line-height: 1.04;
+  }
+
+  .hunt-hero .lead {
+    max-width: 590px;
+    margin: 1.2rem auto 0;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.7;
+  }
+
+  .btn-hunt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem;
+    border: 1px solid var(--hunt-green);
+    border-radius: 10px;
+    background: var(--hunt-green);
+    color: #fff;
+    font-weight: 750;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+
+  .btn-hunt:hover {
+    background: var(--hunt-green-dark);
+    border-color: var(--hunt-green-dark);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(23, 47, 32, 0.2);
+  }
+
+  .btn-hunt:focus-visible,
+  .hunt-choice:focus-visible {
+    outline: 3px solid var(--hunt-gold);
+    outline-offset: 3px;
+  }
+
+  .btn-hero {
+    margin-top: 1.6rem;
+    padding: 0.9rem 1.5rem;
+    border: 0;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--hunt-green-dark);
+    font-weight: 800;
+  }
+
+  .btn-hero:hover {
+    background: #f0f3ec;
+    color: var(--hunt-green-dark);
+    transform: translateY(-1px);
+  }
+
+  /* Intro and layout */
+  .hunt-intro {
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    text-align: center;
+  }
+
+  .hunt-intro h2 {
+    color: var(--hunt-green-dark);
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 850;
+    letter-spacing: -0.035em;
+  }
+
+  .hunt-intro p {
+    color: var(--hunt-muted);
+    line-height: 1.7;
+  }
+
+  .planner-card {
+    overflow: hidden;
+    border: 1px solid var(--hunt-border);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 12px 38px rgba(31, 52, 34, 0.07);
+  }
+
+  .planner-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--hunt-border);
+    background: linear-gradient(120deg, #f5f8f2, #fff);
+  }
+
+  .planner-header h3 {
+    margin: 0 0 0.35rem;
+    color: var(--hunt-green-dark);
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .planner-header p {
+    margin: 0;
+    color: var(--hunt-muted);
+    font-size: 0.93rem;
+  }
+
+  .planner-body {
+    padding: 2rem;
+  }
+
+  .hunt-step {
+    padding: 0 0 2rem;
+    margin: 0 0 2rem;
+    border-bottom: 1px solid #e9eee7;
+    scroll-margin-top: 1.5rem;
+  }
+
+  .hunt-step:last-of-type {
+    margin-bottom: 1.5rem;
+  }
+
+  .step-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .hunt-number {
+    display: inline-flex;
+    flex: 0 0 36px;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: var(--hunt-green-light);
+    color: var(--hunt-green);
+    font-size: 0.95rem;
+    font-weight: 850;
+  }
+
+  .step-heading h4 {
+    margin: 0;
+    padding-top: 0.25rem;
+    color: var(--hunt-green-dark);
+    font-size: 1.12rem;
+    font-weight: 800;
+  }
+
+  .step-description {
+    margin: 0 0 1.15rem 2.95rem;
+    color: var(--hunt-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  /* Image selection cards */
+  .hunt-choice {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 185px;
+    padding: 8px;
+    overflow: hidden;
+    border: 2px solid var(--hunt-border);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--hunt-text);
+    cursor: pointer;
+    text-align: left;
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  .hunt-choice:hover {
+    border-color: #91a78f;
+    background: #fafcf9;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgba(31, 52, 34, 0.08);
+  }
+
+  .hunt-choice img {
+    display: block;
+    width: 100%;
+    height: 135px;
+    flex: 1 0 135px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #e8ede6;
+  }
+
+  .hunt-choice-label {
+    display: block;
+    padding: 11px 5px 5px;
+    font-size: 0.94rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+
+  .hunt-choice.selected {
+    border-color: var(--hunt-green);
+    background: var(--hunt-green-light);
+    box-shadow: 0 0 0 3px rgba(36, 69, 46, 0.12);
+  }
+
+  .hunt-choice.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--hunt-green);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 900;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .choice-grid > div {
+    display: flex;
+  }
+
+  /* Inputs */
+  .hunt-page .form-select,
+  .hunt-page .form-control {
+    min-height: 48px;
+    border: 1px solid #d4ded2;
+    border-radius: 10px;
+    background-color: #fff;
+    color: var(--hunt-text);
+  }
+
+  .hunt-page .form-select:focus,
+  .hunt-page .form-control:focus {
+    border-color: #78967a;
+    box-shadow: 0 0 0 0.22rem rgba(36, 69, 46, 0.12);
+  }
+
+  .hunt-page .form-label {
+    color: var(--hunt-green-dark);
+    font-weight: 750;
+  }
+
+  /* Map */
+  .map-instructions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+    color: var(--hunt-muted);
+    font-size: 0.88rem;
+  }
+
+  .map-instructions span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .map-search-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .map-search-row .form-control {
+    min-width: 0;
+  }
+
+  #gmuMap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 440px;
+    min-height: 340px;
+    overflow: hidden;
+    border: 1px solid var(--hunt-border);
+    border-radius: 14px;
+    background: #e9eee7;
+  }
+
+  #gmuMapStatus {
+    min-height: 1.5rem;
+    margin-top: 0.7rem;
+    color: var(--hunt-muted);
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+
+  .selected-gmu-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid #d7e5d4;
+    border-radius: 12px;
+    background: var(--hunt-green-light);
+  }
+
+  .selected-gmu-label {
+    color: var(--hunt-muted);
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  #selectedGMU {
+    margin-top: 0.2rem;
+    color: var(--hunt-green-dark);
+    font-size: 1.2rem;
+    font-weight: 850;
+  }
+
+  .gmu-pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--hunt-green);
+    font-size: 1.15rem;
+  }
+
+  .cpw-link {
+    display: inline-block;
+    margin-top: 0.85rem;
+    color: var(--hunt-green);
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .cpw-link:hover {
+    color: var(--hunt-green-dark);
+    text-decoration: underline;
+  }
+
+  /* License guidance */
+  #licenseInfo {
+    border: 1px solid #d7e5d4;
+    border-radius: 12px;
+    background: #f2f7ef;
+    color: var(--hunt-text);
+  }
+
+  #licenseInfo .alert-heading {
+    color: var(--hunt-green-dark);
+    font-weight: 800;
+  }
+
+  #licenseLink {
+    color: var(--hunt-green);
+    font-weight: 750;
+  }
+
+  /* Results */
+  #huntResults {
+    padding: 1.25rem;
+    border: 1px solid var(--hunt-border);
+    border-radius: 14px;
+    background: #f8faf6;
+    scroll-margin-top: 1.5rem;
+  }
+
+  #huntResults h3 {
+    margin-bottom: 1rem;
+    color: var(--hunt-green-dark);
+    font-size: 1.35rem;
+    font-weight: 850;
+  }
+
+  #huntSummary {
+    overflow: hidden;
+    border-radius: 10px;
+  }
+
+  #huntSummary .list-group-item {
+    padding: 0.95rem 1rem;
+    border-color: #e5ebe2;
+    overflow-wrap: anywhere;
+  }
+
+  .planner-disclaimer {
+    margin-top: 1.1rem;
+    color: var(--hunt-muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  /* Responsive layout */
+  @media (min-width: 992px) {
+    .planner-body {
+      padding: 2.5rem;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .hunt-page {
+      padding-top: 0.75rem;
+    }
+
+    .hunt-hero {
+      min-height: 330px;
+      padding: 3rem 1.2rem;
+      border-radius: 16px;
+    }
+
+    .hunt-hero h1 {
+      font-size: 2.65rem;
+    }
+
+    .planner-card {
+      border-radius: 15px;
+    }
+
+    .planner-header {
+      padding: 1.25rem;
+    }
+
+    .planner-body {
+      padding: 1.15rem;
+    }
+
+    .hunt-choice {
+      min-height: 155px;
+      padding: 6px;
+    }
+
+    .hunt-choice img {
+      height: 110px;
+      flex-basis: 110px;
+    }
+
+    .hunt-choice-label {
+      padding: 9px 3px 4px;
+      font-size: 0.86rem;
+    }
+
+    #gmuMap {
+      height: 360px;
+      min-height: 300px;
+    }
+
+    .map-search-row {
+      flex-direction: column;
+    }
+
+    .map-search-row .btn {
+      width: 100%;
+      min-height: 46px;
+    }
+
+    .step-description {
+      margin-left: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hunt-choice,
+    .btn-hunt,
+    .btn-hero {
+      transition: none;
+    }
+  }

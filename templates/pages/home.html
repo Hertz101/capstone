@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Colorado Hunt Planner | Plan Your Hunt{% endblock title %}
+
+{% block content %}
+
+<div class="container hunt-page py-4">
+
+  <!-- Hero -->
+  <section class="hunt-hero mb-5">
+    <div class="hunt-hero-content">
+      <span class="hunt-eyebrow">Colorado Hunt Planner</span>
+
+      <h1>Your Hunt.<br>Your Plan.</h1>
+
+      <p class="lead">
+        Build your next Colorado hunting plan. Choose your species,
+        select your method, and explore Game Management Unit boundaries.
+      </p>
+
+      <a href="#hunt-planner" class="btn btn-hero btn-lg">
+        Start planning <span aria-hidden="true">↓</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Intro -->
+  <section class="hunt-intro" id="hunt-planner">
+    <h2>Build Your Hunt Plan</h2>
+    <p>
+      Follow the steps below to organize your hunt area, preferred method,
+      and license checklist in one place.
+    </p>
+  </section>
+
+  <!-- Planner -->
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+
+      <div class="planner-card">
+        <div class="planner-header">
+          <h3>Hunt details</h3>
+          <p>Choose one option in each section to continue.</p>
+        </div>
+
+        <div class="planner-body">
+          <form id="huntForm">
+
+            <!-- Step 1: Species -->
+            <section class="hunt-step" aria-labelledby="speciesHeading">
+              <div class="step-heading">
+                <span class="hunt-number" aria-hidden="true">1</span>
+                <h4 id="speciesHeading">What do you want to hunt?</h4>
+              </div>
+
+              <p class="step-description">
+                Select your target species.
+              </p>
+
+              <div class="row g-3 choice-grid" id="speciesCards">
+
+                <div class="col-6 col-md-4">
+                  <button type="button"
+                    class="hunt-choice hunt-card"
+                    data-group="species"
+                    data-value="Elk"
+                    aria-pressed="false">
+                    <img src="{% static 'img/elk.jpeg' %}"
+                      alt="Elk in the wild">
+                    <span class="hunt-choice-label">Elk</span>
+                  </button>
+                </div>
+
+                <div class="col-6 col-md-4">
+                  <button type="button"
+                    class="hunt-choice hunt-card"
+                    data-group="species"
+                    data-value="Mule Deer"
+                    aria-pressed="false">
+                    <img src="{% static 'img/mule.jpeg' %}"
+                      alt="Mule deer">
+                    <span class="hunt-choice-label">Mule Deer</span>
+                  </button>
+                </div>
+
+                <div class="col-6 col-md-4">
+                  <button type="button"
+                    class="hunt-choice hunt-card"
+                    data-group="species"
+                    data-value="Whitetail Deer"
+                    aria-pressed="false">
+                    <img src="{% static 'img/whitetail.jpeg' %}"
+                      alt="Whitetail deer">
+                    <span class="hunt-choice-label">Whitetail Deer</span>
+                  </button>
+                </div>
+
+                <div class="col-6 col-md-4">
+                  <button type="button"
+                    class="hunt-choice hunt-card"
+                    data-group="species"
+                    data-value="Bear"
+                    aria-pressed="false">
+                    <img src="{% static 'img/bear.jpeg' %}"
+                      alt="Bear">
+                    <span class="hunt-choice-label">Bear</span>
+                  </button>
+                </div>
+
+                <div class="col-6 col-md-4">
+                  <button type="button"
+                    class="hunt-choice hunt-card"
+                    data-group="species"
+                    data-value="Pronghorn"
+                    aria-pressed="false">
+                    <img src="{% static 'img/pronghorn.jpeg' %}"
+                      alt="Pronghorn">
+                    <span class="hunt-choice-label">Pronghorn</span>
+                  </button>
+                </div>
+
+              </div>
+
+              <select id="species" name="species"
+                class="visually-hidden"
+                tabindex="-1"
+                aria-hidden="true"
+                required>
+                <option value="">Choose a species</option>
+                <option value="Elk">Elk</option>
+                <option value="Mule Deer">Mule Deer</option>
+                <option value="Whitetail Deer">Whitetail Deer</option>
+                <option value="Bear">Bear</option>
+                <option value="Pronghorn">Pronghorn</option>
+              </select>
+            </section>
+
+            <!-- Step 2: Method -->
+            <section class="hunt-step" aria-labelledby="methodHeading">
+              <div class="step-heading">
+                <span class="hunt-number" aria-hidden="true">2</span>
+                <h4 id="methodHeading">How do you plan to hunt?</h4>
+              </div>
+
+              <p class="step-description">
+                Select your preferred hunting method.
+              </p>
+
+              <div class="row g-3 choice-grid" id="methodCards">
+
+                <div class="col-6 col-md-4">
+                  <button type="button"
+                    class="hunt-choice hunt-card"
+                    data-group="method"
+                    data-value="Rifle"
+                    aria-pressed="false">
+                    <img src="{% static 'img/rifle.jpeg' %}"
+                      alt="Rifle hunting">
+                    <span class="hunt-choice-label">Rifle</span>
+                  </button>
+                </div>
+
+                <div class="col-6 col-md-4">
+                  <button type="button"
+                    class="hunt-choice hunt-card"
+                    data-group="method"
+                    data-value="Archery"
+                    aria-pressed="false">
+                    <img src="{% static 'img/bow.jpeg' %}"
+                      alt="Archery hunting">
+                    <span class="hunt-choice-label">Archery</span>
+                  </button>
+                </div>
+
+                <div class="col-6 col-md-4">
+                  <button type="button"
+                    class="hunt-choice hunt-card"
+                    data-group="method"
+                    data-value="Black Powder"
+                    aria-pressed="false">
+                    <img src="{% static 'img/powder.jpeg' %}"
+                      alt="Muzzleloader hunting">
+                    <span class="hunt-choice-label">Black Powder</span>
+                  </button>
+                </div>
+
+              </div>
+
+              <select id="method" name="method"
+                class="visually-hidden"
+                tabindex="-1"
+                aria-hidden="true"
+                required>
+                <option value="">Choose a method</option>
+                <option value="Rifle">Rifle</option>
+                <option value="Archery">Archery</option>
+                <option value="Black Powder">Black Powder</option>
+              </select>
+            </section>
+
+            <!-- Step 3: GMU -->
+            <section class="hunt-step" aria-labelledby="gmuHeading">
+              <div class="step-heading">
+                <span class="hunt-number" aria-hidden="true">3</span>
+                <h4 id="gmuHeading">Choose your hunting unit</h4>
+              </div>
+
+              <p class="step-description">
+                Search by GMU number or click a boundary on the interactive map.
+              </p>
+
+              <label for="gmuSearch" class="form-label">
+                Search Game Management Units
+              </label>
+
+              <div class="map-search-row">
+                <input type="search"
+                  id="gmuSearch"
+                  class="form-control"
+                  placeholder="Enter GMU number, e.g. 12"
+                  autocomplete="off"
+                  aria-describedby="gmuMapStatus">
+
+                <button type="button"
+                  id="gmuSearchButton"
+                  class="btn btn-hunt">
+                  Find GMU
+                </button>
+              </div>
+
+              <div id="gmuMap"
+                data-maptiler-key="{{ MAPTILER_API_KEY }}"
+                role="region"
+                aria-label="Interactive Colorado Game Management Unit map">
+              </div>
+
+              <p id="gmuMapStatus"
+                class="small"
+                role="status"
+                aria-live="polite">
+                Initializing map...
+              </p>
+
+              <div class="selected-gmu-panel mt-3">
+                <div>
+                  <div class="selected-gmu-label">Selected hunting unit</div>
+                  <div id="selectedGMU">No GMU selected</div>
+                </div>
+
+                <span class="gmu-pin" aria-hidden="true">⌖</span>
+              </div>
+
+              <input type="hidden" id="gmu" name="gmu" required>
+
+              <a href="https://cpw.state.co.us/activities/hunting/where-hunt"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="cpw-link">
+                Open official CPW Hunting Atlas
+                <span aria-hidden="true">↗</span>
+              </a>
+            </section>
+
+            <!-- Step 4: License -->
+            <section class="hunt-step" aria-labelledby="licenseHeading">
+              <div class="step-heading">
+                <span class="hunt-number" aria-hidden="true">4</span>
+                <h4 id="licenseHeading">Check your license status</h4>
+              </div>
+
+              <p class="step-description">
+                Tell us whether you already have a license so you can see
+                the relevant next steps.
+              </p>
+
+              <label for="license" class="form-label">
+                Do you already have your license?
+              </label>
+
+              <select id="license" name="license"
+                class="form-select"
+                required>
+                <option value="">Choose an answer</option>
+                <option value="yes">Yes, I have a license</option>
+                <option value="no">No, I need a license</option>
+                <option value="unsure">I'm not sure</option>
+              </select>
+
+              <div id="licenseInfo"
+                class="alert mt-3 d-none"
+                role="status"
+                aria-live="polite">
+                <h5 id="licenseTitle" class="alert-heading"></h5>
+                <p id="licenseDescription"></p>
+
+                <a id="licenseLink"
+                  href="https://www.cpwshop.com/purchaseprivilege.page"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  Review CPW license information
+                </a>
+              </div>
+            </section>
+
+            <button type="submit"
+              class="btn btn-hunt btn-lg w-100">
+              Build My Hunt Plan
+              <span aria-hidden="true">→</span>
+            </button>
+
+            <p class="planner-disclaimer mb-0">
+              This planner helps organize your choices. It does not verify
+              license eligibility, season dates, legal methods, tag availability,
+              or permission to access land. Always confirm current Colorado
+              Parks and Wildlife regulations and land access requirements.
+            </p>
+
+          </form>
+
+          <!-- Results -->
+          <section id="huntResults"
+            class="mt-4 d-none"
+            aria-live="polite"
+            tabindex="-1">
+            <h3>Your Hunt Plan</h3>
+            <ul id="huntSummary" class="list-group"></ul>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+  {{ block.super }}
+  <script src="{% static 'hunting/hunt-planner.js' %}"></script>
+  <script src="{% static 'hunting/gmu-map.js' %}"></script>
+
+  <script>
+    // Connect the visible Find GMU button to the existing map search.
+    // gmu-map.js can expose its search function through this event.
+    document.getElementById("gmuSearchButton")?.addEventListener("click", () => {
+      const search = document.getElementById("gmuSearch");
+      if (search) {
+        search.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+  </script>
+{% endblock js %}

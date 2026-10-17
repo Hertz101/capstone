@@ -1,0 +1,58 @@
+
+.hunt-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 2px solid #dee2e6;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.hunt-card img {
+  display: block;
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.hunt-card span {
+  display: block;
+  padding: 12px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.hunt-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.12);
+}
+
+.hunt-card.selected {
+  border-color: #198754;
+  box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
+}
+
+.hunt-card.selected span {
+  background: #eaf5ee;
+  color: #146c43;
+}
+
+.hunt-card:focus-visible {
+  outline: 3px solid #0d6efd;
+  outline-offset: 3px;
+}
+
+@media (max-width: 576px) {
+  .hunt-card img {
+    height: 115px;
+  }
+
+  .hunt-card span {
+    padding: 9px;
+    font-size: 0.95rem;
+  }
+}

@@ -1,0 +1,108 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-1">
+    <div class="container-fluid">
+
+        <!-- Logo and Brand -->
+        <a class="navbar-brand d-flex align-items-center gap-2"
+          href="{% url 'home' %}">
+            <img
+                src="{% static 'img/logo.png' %}"
+                alt="Rocky Mountain Coalition logo"
+                style="height: 44px; width: auto; object-fit: contain;"
+            >
+            <span>Rocky Mountain Coalition</span>
+        </a>
+
+        <!-- Mobile Menu Toggle -->
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mainNavbar"
+            aria-controls="mainNavbar"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navigation Links -->
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}">
+                        Home
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'get_started' %}">
+                        Get Started
+                    </a>
+                </li>
+
+                <!-- Tools Dropdown -->
+                <li class="nav-item dropdown">
+                    <a
+                        class="nav-link dropdown-toggle"
+                        href="#"
+                        id="toolsDropdown"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                    >
+                        Tools
+                    </a>
+
+                    <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'maps' %}">
+                                Hunting Map
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                Regulations
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'blog' %}">
+                                Blog
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'your_trip' %}">
+                        Your Trip
+                    </a>
+                </li>
+
+            </ul>
+
+            <!-- Search -->
+            <form
+                class="d-flex gap-2"
+                role="search"
+                action="{% url 'home' %}"
+                method="get"
+            >
+                <input
+                    class="form-control"
+                    type="search"
+                    name="q"
+                    placeholder="Search"
+                    aria-label="Search"
+                >
+                <button class="btn btn-outline-light" type="submit">
+                    Search
+                </button>
+            </form>
+        </div>
+
+    </div>
+</nav>
