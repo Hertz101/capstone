@@ -27,7 +27,7 @@
     <!-- Leaflet CSS -->
     <link
         rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        href="{% static 'vendor/leaflet/leaflet.css' %}"
     >
 
 </head>
@@ -35,12 +35,12 @@
 
     {% include 'navbar.html' %}
 
-    <main>
+    <main class="flex-grow-1">
         {% block content %}
         {% endblock content %}
     </main>
 
-    <footer class="fixed-bottom py-3">
+    <footer class="py-3 mt-5">
         {% include 'footer.html' %}
     </footer>
 
@@ -48,7 +48,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Leaflet JavaScript -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
 
     {% block js %}
     {% endblock js %}

@@ -38,8 +38,8 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'get_started' %}">
-                        Get Started
+                    <a class="nav-link" href="{% url 'planner' %}">
+                        Hunting Planner
                     </a>
                 </li>
 
@@ -63,11 +63,21 @@
                             </a>
                         </li>
                         <li>
+                            <a class="dropdown-item" href="{% url 'resource' %}">
+                                Resources
+                            </a>
+                        </li>
+                        <li>
                             <a class="dropdown-item" href="#">
                                 Regulations
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'group_chat' %}">
+                                Group Chat
+                            </a>
+                        </li>
                         <li>
                             <a class="dropdown-item" href="{% url 'blog' %}">
                                 Blog

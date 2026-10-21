@@ -143,11 +143,9 @@
   }
 
   // ----------------------------------------
-  // Load Colorado Parks and Wildlife GMUs.
+  // Build the ArcGIS query URL for GMU data.
   // ----------------------------------------
-  async function loadGMUs() {
-    setStatus("Loading GMU boundaries from CPW GIS...");
-
+  function buildQuery() {
     const params = new URLSearchParams({
       where: "GMUID IS NOT NULL",
       outFields: "*",
@@ -156,104 +154,108 @@
       f: "geojson"
     });
 
-    try {
-      const response = await fetch(
-        `${CPW_GMU_QUERY}?${params.toString()}`
+    return `${CPW_GMU_QUERY}?${params.toString()}`;
+  }
+
+  // ----------------------------------------
+  // Validate the response and keep usable features.
+  // ----------------------------------------
+  function validateAndFilterFeatures(data) {
+    if (data.error) {
+      throw new Error(
+        data.error.message || "CPW GIS returned an error."
       );
+    }
+
+    if (
+      !Array.isArray(data.features) ||
+      data.features.length === 0
+    ) {
+      throw new Error(
+        "The CPW GIS service returned no GMU features."
+      );
+    }
+
+    const validFeatures = data.features.filter(feature => {
+      if (
+        !feature ||
+        !feature.geometry ||
+        !getGMU(feature)
+      ) {
+        return false;
+      }
+
+      try {
+        return L.geoJSON(feature).getBounds().isValid();
+      } catch (error) {
+        return false;
+      }
+    });
+
+    if (validFeatures.length === 0) {
+      console.error("CPW GeoJSON response:", data);
+
+      throw new Error(
+        "No valid GMU boundaries were found in the CPW response."
+      );
+    }
+
+    return validFeatures;
+  }
+
+  // ----------------------------------------
+  // Add the GMU layer to the map and fit its bounds.
+  // ----------------------------------------
+  function addGMULayerToMap(features) {
+    featureLayers = [];
+
+    gmuLayer = L.geoJSON(
+      { type: "FeatureCollection", features },
+      {
+        style: normalStyle,
+        onEachFeature(feature, layer) {
+          const number = getGMU(feature);
+
+          layer.bindTooltip(`GMU ${number}`);
+          layer.on("click", () => selectFeature(layer, feature));
+          featureLayers.push({ feature, layer });
+        }
+      }
+    ).addTo(map);
+
+    const bounds = gmuLayer.getBounds();
+
+    if (!bounds.isValid()) {
+      gmuLayer.remove();
+      gmuLayer = null;
+      throw new Error("The GMU layer has invalid map bounds.");
+    }
+
+    map.fitBounds(bounds, { padding: [15, 15] });
+  }
+
+  // ----------------------------------------
+  // Load Colorado Parks and Wildlife GMUs.
+  // Fetch → validate → add to map → report status.
+  // ----------------------------------------
+  async function loadGMUs() {
+    setStatus("Loading GMU boundaries from CPW GIS...");
+
+    try {
+      const response = await fetch(buildQuery());
 
       if (!response.ok) {
-        throw new Error(
-          `CPW GIS request failed: HTTP ${response.status}`
-        );
+        throw new Error(`CPW GIS request failed: HTTP ${response.status}`);
       }
 
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(
-          data.error.message || "CPW GIS returned an error."
-        );
-      }
-
-      if (
-        !Array.isArray(data.features) ||
-        data.features.length === 0
-      ) {
-        throw new Error(
-          "The CPW GIS service returned no GMU features."
-        );
-      }
-
-      const validFeatures = data.features.filter(feature => {
-        if (
-          !feature ||
-          !feature.geometry ||
-          !getGMU(feature)
-        ) {
-          return false;
-        }
-
-        try {
-          return L.geoJSON(feature).getBounds().isValid();
-        } catch (error) {
-          return false;
-        }
-      });
-
-      if (validFeatures.length === 0) {
-        console.error("CPW GeoJSON response:", data);
-
-        throw new Error(
-          "No valid GMU boundaries were found in the CPW response."
-        );
-      }
-
-      featureLayers = [];
-
-      gmuLayer = L.geoJSON(
-        {
-          type: "FeatureCollection",
-          features: validFeatures
-        },
-        {
-          style: normalStyle,
-
-          onEachFeature(feature, layer) {
-            const number = getGMU(feature);
-
-            layer.bindTooltip(`GMU ${number}`);
-
-            layer.on("click", () => {
-              selectFeature(layer, feature);
-            });
-
-            featureLayers.push({
-              feature,
-              layer
-            });
-          }
-        }
-      ).addTo(map);
-
-      const bounds = gmuLayer.getBounds();
-
-      if (!bounds.isValid()) {
-        gmuLayer.remove();
-        gmuLayer = null;
-
-        throw new Error("The GMU layer has invalid map bounds.");
-      }
-
-      map.fitBounds(bounds, {
-        padding: [15, 15]
-      });
+      const validFeatures = validateAndFilterFeatures(await response.json());
+      addGMULayerToMap(validFeatures);
 
       setStatus(
         `${validFeatures.length} GMU boundaries loaded. Click a unit to select it.`
       );
     } catch (error) {
       console.error("Unable to load CPW GMUs:", error);
-
       setStatus(
         `Could not load GMU boundaries: ${error.message}. ` +
         "You can use the official CPW Hunting Atlas."

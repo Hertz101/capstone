@@ -12,21 +12,32 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from a local .env file (if present).
+# This lets you store keys like MAPTILER_API_KEY locally without exporting
+# them manually in your shell every session.
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@q^*pfx9*mt3n%9zu6&(trzssau2)ma0cf@@r90k8w&(7szl!&'
+# Set DJANGO_SECRET_KEY in the environment (e.g. production .env).
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-@q^*pfx9*mt3n%9zu6&(trzssau2)ma0cf@@r90k8w&(7szl!&"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Set DJANGO_DEBUG=false (or anything other than "true") in production.
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split() or []
 
 
 # Application definition
@@ -41,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'pages',
+    'hunting',
 ]
 
 MIDDLEWARE = [

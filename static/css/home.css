@@ -35,7 +35,7 @@
         rgba(14, 34, 22, 0.92),
         rgba(24, 54, 35, 0.66)
       ),
-      url("{% static 'img/rmc.jpeg' %}") center 48% / cover no-repeat;
+      url("../img/rmc.jpeg") center 48% / cover no-repeat;
     box-shadow: 0 16px 40px rgba(27, 47, 31, 0.16);
   }
 
@@ -536,3 +536,103 @@
       transition: none;
     }
   }
+/* Explore grid: static link cards to key pages */
+.explore-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+@media (max-width: 991px) {
+    .explore-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.explore-card {
+    position: relative;
+    display: block;
+    height: 340px;
+    border: 1px solid var(--hunt-border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 38px rgba(31, 52, 34, 0.07);
+    color: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.explore-card:hover,
+.explore-card:focus-visible {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 44px rgba(31, 52, 34, 0.14);
+}
+
+.explore-card:focus-visible {
+    outline: 3px solid var(--hunt-gold);
+    outline-offset: 3px;
+}
+
+.explore-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.explore-card:hover .explore-img {
+    transform: scale(1.04);
+}
+
+.explore-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.6rem;
+    background: linear-gradient(
+        to top,
+        rgba(14, 34, 22, 0.85) 0%,
+        rgba(14, 34, 22, 0.25) 55%,
+        rgba(14, 34, 22, 0) 100%
+    );
+}
+
+.explore-kicker {
+    display: inline-block;
+    margin-bottom: 0.4rem;
+    color: #f5e5bf;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.explore-title {
+    font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+    font-weight: 850;
+    letter-spacing: -0.03em;
+}
+
+.explore-card:hover .explore-title {
+    text-decoration: underline;
+    text-underline-offset: 6px;
+}
+
+.explore-text {
+    max-width: 420px;
+    margin-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: clamp(0.95rem, 1.6vw, 1.05rem);
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 3px rgba(10, 24, 16, 0.55);
+}
+
+#homeCarousel .carousel-item a:hover .carousel-title {
+    text-decoration: underline;
+    text-underline-offset: 6px;
+}
+

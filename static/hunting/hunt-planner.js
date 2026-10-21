@@ -102,37 +102,51 @@
   // ----------------------------------------
   // License guidance
   // ----------------------------------------
+  const LICENSE_GUIDANCE = {
+    yes: {
+      title: "Check your license details",
+      description:
+        "Confirm your license or application is valid for your species, GMU, season, method, and dates. This selection does not verify eligibility.",
+      linkText: "Review CPW License Options"
+    },
+    no: {
+      title: "Find the license you need",
+      description:
+        "Review current Colorado Parks and Wildlife license requirements, application options, deadlines, and restrictions.",
+      linkText: "Visit CPW License Shop"
+    },
+    unsure: {
+      title: "Not sure which license applies?",
+      description:
+        "Check current CPW regulations and license information for your species, hunt area, season, and method.",
+      linkText: "Check CPW License Information"
+    }
+  };
+
   function updateLicenseInfo() {
     const answer = licenseInput.value;
+    const guidance = LICENSE_GUIDANCE[answer];
 
-    licenseInfo.classList.add("d-none");
+    // Hide the box until a known answer is chosen.
+    licenseInfo.classList.toggle("d-none", !guidance);
 
-    if (!answer) {
+    if (!guidance) {
       return;
     }
 
-    licenseInfo.classList.remove("d-none");
     licenseLink.href = CPW_LICENSE_URL;
-
-    if (answer === "yes") {
-      licenseTitle.textContent = "Check your license details";
-      licenseDescription.textContent =
-        "Confirm your license or application is valid for your species, GMU, season, method, and dates. This selection does not verify eligibility.";
-      licenseLink.textContent = "Review CPW License Options";
-    } else if (answer === "no") {
-      licenseTitle.textContent = "Find the license you need";
-      licenseDescription.textContent =
-        "Review current Colorado Parks and Wildlife license requirements, application options, deadlines, and restrictions.";
-      licenseLink.textContent = "Visit CPW License Shop";
-    } else if (answer === "unsure") {
-      licenseTitle.textContent = "Not sure which license applies?";
-      licenseDescription.textContent =
-        "Check current CPW regulations and license information for your species, hunt area, season, and method.";
-      licenseLink.textContent = "Check CPW License Information";
-    }
+    licenseTitle.textContent = guidance.title;
+    licenseDescription.textContent = guidance.description;
+    licenseLink.textContent = guidance.linkText;
   }
 
   licenseInput.addEventListener("change", updateLicenseInfo);
+
+  const LICENSE_SUMMARY_TEXT = {
+    yes: "Yes — verify license and hunt eligibility",
+    no: "No — review license requirements",
+    unsure: "Unsure — check CPW license information"
+  };
 
   // ----------------------------------------
   // Hunt summary helpers
@@ -184,11 +198,8 @@
       return;
     }
 
-    const licenseText = {
-      yes: "Yes — verify license and hunt eligibility",
-      no: "No — review license requirements",
-      unsure: "Unsure — check CPW license information"
-    }[licenseAnswer] || "Check CPW license information";
+    const licenseText =
+      LICENSE_SUMMARY_TEXT[licenseAnswer] || "Check CPW license information";
 
     summary.replaceChildren();
 

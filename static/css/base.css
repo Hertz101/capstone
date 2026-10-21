@@ -1,0 +1,12 @@
+/* Sticky footer layout: body fills the viewport as a flex column so the
+   footer always sits at the bottom of the page instead of floating over
+   the content (replaces Bootstrap's fixed-bottom). */
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
+}

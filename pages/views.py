@@ -1,6 +1,16 @@
 
+import logging
 import os
+
+from django.conf import settings
 from django.shortcuts import render
+
+logger = logging.getLogger(__name__)
+
+
+def get_maptiler_key():
+    """Return the MapTiler key from Django settings, falling back to the environment."""
+    return getattr(settings, "MAPTILER_API_KEY", "") or os.environ.get("MAPTILER_API_KEY", "")
 
 
 def home_view(request):
@@ -13,19 +23,8 @@ def home_view(request):
     ]
 
     return render(request, "pages/home.html", {
-    "animal_cards": animal_cards,
-    "MAPTILER_API_KEY": os.environ.get("MAPTILER_API_KEY", ""),
-})
-
-
-def home_view(request):
-    return render(request, "pages/home.html", {
-        "MAPTILER_API_KEY": os.environ.get("MAPTILER_API_KEY", ""),
+        "animal_cards": animal_cards,
     })
-
-
-def get_started_view(request):
-    return render(request, "pages/get_started.html")
 
 
 def tools_view(request):
@@ -33,7 +32,9 @@ def tools_view(request):
 
 
 def maps_view(request):
-    return render(request, "pages/maps.html")
+    return render(request, "pages/maps.html", {
+        "maptiler_key": get_maptiler_key(),
+    })
 
 
 def your_trip_view(request):
@@ -42,3 +43,11 @@ def your_trip_view(request):
 
 def blog_view(request):
     return render(request, "pages/blog.html")
+
+
+def group_chat_view(request):
+    return render(request, "pages/group_chat.html")
+
+
+def resource_view(request):
+    return render(request, "pages/resource.html")
