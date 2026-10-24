@@ -4,127 +4,7 @@
 {% block title %}Colorado Hunting Map — Rocky Mountain Coalition{% endblock title %}
 
 {% block extra_css %}
-<style>
-    html, body { margin: 0; height: 100%; font-family: Arial, sans-serif; }
-    #app { display: flex; min-height: 600px; height: calc(100vh - 180px); position: relative; }
-    #sidebar {
-      width: 285px; padding: 18px; overflow-y: auto;
-      background: #17232d; color: white; box-sizing: border-box;
-      border-radius: 12px 0 0 12px;
-    }
-    #map { flex: 1; min-width: 0; min-height: 600px; }
-    h2 { font-size: 21px; margin-top: 0; }
-    h3 { font-size: 15px; margin-top: 24px; }
-    label { display: block; margin: 14px 0; cursor: pointer; }
-    input { margin-right: 8px; }
-    #status { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
-    #info { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
-    .note { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
-  .stats-links a {
-    display: block;
-    margin: 6px 0;
-    color: #7dd3fc;
-    font-size: 12.5px;
-    line-height: 1.4;
-    text-decoration: none;
-  }
-  .stats-links a:hover { text-decoration: underline; }
-  /* Full-width stats panel below the map */
-  .stat-panel {
-    margin: 0 auto 3rem;
-    max-width: 1200px;
-    background: #fff;
-    border: 1px solid #dce5da;
-    border-radius: 18px;
-    box-shadow: 0 12px 38px rgba(31, 52, 34, 0.09);
-    overflow: hidden;
-  }
-  .stat-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 22px;
-    background: #24452e;
-    color: #fff;
-    font-size: 15px;
-  }
-  .stat-panel-header button {
-    border: none; background: none;
-    font-size: 24px; line-height: 1;
-    cursor: pointer; color: #cfe0cf;
-  }
-  .stat-panel-header button:hover { color: #fff; }
-  .stat-tabs {
-    display: flex;
-    gap: 6px;
-    padding: 10px 22px 0;
-    overflow-x: auto;
-  }
-  .stat-tabs button {
-    padding: 6px 14px;
-    border: 1px solid #c8d4c6;
-    border-radius: 999px;
-    background: #fff;
-    color: #26332a;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .stat-tabs button.active {
-    background: #24452e;
-    border-color: #24452e;
-    color: #fff;
-  }
-  .stat-panel-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 18px;
-    padding: 20px 22px;
-    font-size: 13.5px;
-    color: #26332a;
-  }
-  .stat-species-block {
-    border: 1px solid #e4ebe2;
-    border-radius: 12px;
-    padding: 12px 14px;
-    background: #f7faf5;
-  }
-  .stat-species-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: #172f20;
-  }
-  .stat-species-title .colhead { font-size: 11px; font-weight: 400; color: #6b776d; }
-  .stat-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed #e8eee6; }
-  .stat-row:last-child { border-bottom: none; }
-  .stat-row .trend-up { color: #16a34a; font-weight: 700; }
-  .stat-row .trend-down { color: #dc2626; font-weight: 700; }
-  .stat-row .trend-arrow { font-size: 15px; margin-left: 3px; }
-  .stat-seasons { margin-top: 8px; padding-top: 6px; border-top: 1px dashed #e8eee6; }
-  .stat-seasons-head { font-size: 11px; font-weight: 700; color: #44584a; margin-bottom: 3px; letter-spacing: 0.02em; }
-  .stat-season-row { display: flex; justify-content: space-between; font-size: 11.5px; color: #44584a; padding: 1px 0; }
-  .stat-sexrow {
-    padding: 0 0 4px 14px;
-    font-size: 11.5px;
-    color: #6b776d;
-  }
-  .stat-note {
-    padding: 0 22px 16px;
-    font-size: 11.5px;
-    color: #6b776d;
-    line-height: 1.5;
-  }
-    @media(max-width:650px) {
-      #sidebar { width: 190px; padding: 12px; }
-      #sidebar h2 { font-size: 17px; }
-      #app { height: auto; }
-      #map { min-height: 400px; }
-    }
-  </style>
+<link rel="stylesheet" href="{% static 'css/maps.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
@@ -135,7 +15,7 @@
     <p class="note">CPW GIS layers on an interactive MapTiler terrain map.</p>
 
     <h3>Find a GMU</h3>
-    <div style="display:flex;gap:6px">
+    <div class="search-row">
       <input
         id="gmuSearch"
         type="search"
@@ -144,22 +24,16 @@
         autocomplete="off"
         inputmode="numeric"
         enterkeyhint="search"
-        style="flex:1;min-width:0;padding:7px 9px;border-radius:8px;border:1px solid #33475a;background:#0f1922;color:#e2e8f0;box-sizing:border-box"
       >
-      <button
-        id="gmuSearchBtn"
-        type="button"
-        aria-label="Search GMU"
-        style="padding:7px 12px;border-radius:8px;border:1px solid #33475a;background:#24452e;color:#fff;font-weight:700;cursor:pointer"
-      >Go</button>
+      <button id="gmuSearchBtn" type="button" aria-label="Search GMU">Go</button>
     </div>
     <datalist id="gmuList"></datalist>
-    <p class="note" id="searchStatus" style="margin-top:5px">Search available once GMU boundaries load.</p>
+    <p class="note" id="searchStatus">Search available once GMU boundaries load.</p>
 
     <h3>Harvest by season</h3>
     <div>
-      <label style="margin:6px 0">Species:
-        <select id="speciesSelect" style="display:block;width:100%;margin-top:4px">
+      <label class="filter-label">Species:
+        <select id="speciesSelect" class="filter-select">
           <option value="all">All species</option>
           <option value="elk">Elk</option>
           <option value="deer">Deer</option>
@@ -167,8 +41,8 @@
           <option value="bear">Bear</option>
         </select>
       </label>
-      <label style="margin:6px 0">Year:
-        <select id="yearSelect" style="display:block;width:100%;margin-top:4px">
+      <label class="filter-label">Year:
+        <select id="yearSelect" class="filter-select">
           <option value="2023">2023 (latest)</option>
           <option value="2022">2022</option>
           <option value="2021">2021</option>
@@ -176,8 +50,8 @@
           <option value="2019">2019</option>
         </select>
       </label>
-      <label style="margin:6px 0">Season / method:
-        <select id="seasonSelect" style="display:block;width:100%;margin-top:4px">
+      <label class="filter-label">Season / method:
+        <select id="seasonSelect" class="filter-select">
           <option value="all">All seasons combined</option>
           <option value="rifle_1">Rifle season 1</option>
           <option value="rifle_2">Rifle season 2</option>
@@ -187,15 +61,15 @@
           <option value="muzzleloader">Muzzleloader</option>
         </select>
       </label>
-      <label style="margin:6px 0">Sex:
-        <select id="sexSelect" style="display:block;width:100%;margin-top:4px">
+      <label class="filter-label">Sex:
+        <select id="sexSelect" class="filter-select">
           <option value="any">Either sex (all harvest)</option>
           <option value="males">Male only (bulls/bucks/boars)</option>
           <option value="females">Female only (cows/does/sows)</option>
           <option value="licenses">License sex (elk draw, 2026)</option>
         </select>
       </label>
-      <p class="note" style="margin-top:6px">
+      <p class="note filter-note">
         Deer licenses are limited (no 1st rifle). Pronghorn reports
         rifle seasons combined. Bear seasons are the September hunts.
       </p>
@@ -229,7 +103,9 @@
       a particular road or across neighboring private land.
     </p>
   </aside>
-  <div id="map"></div>
+  <div id="map"
+       data-maptiler-key="{{ maptiler_key|escapejs }}"
+       data-stats-url="{% static 'hunting/elk_stats.json' %}"></div>
   </div>
 
   <!-- GMU stats panel: full-width, below the map -->
@@ -246,568 +122,6 @@
 {% endblock content %}
 
 {% block js %}
-<script>
-const CPW =
-  "https://services5.arcgis.com/ttNGmDvKQA7oeDQ3/ArcGIS/rest/services/CPWAdminData/FeatureServer";
-
-const layers = {
-  gmu: {
-    id: 6, name: "Big-game GMU",
-    color: "#d946ef", opacity: 0.04
-  },
-  public: {
-    id: 5, name: "CPW public-access property",
-    color: "#16a34a", opacity: 0.25
-  },
-  wia: {
-    id: 12, name: "Walk-In Access",
-    color: "#f59e0b", opacity: 0.24
-  },
-  elk: {
-    id: 23, name: "Elk DAU",
-    color: "#dc2626", opacity: 0.10
-  },
-  deer: {
-    id: 22, name: "Deer DAU",
-    color: "#2563eb", opacity: 0.10
-  }
-};
-
-const SEX_M = { elk: "bull", deer: "buck", pronghorn: "buck", bear: "boar" };
-const SEX_F = { elk: "cow", deer: "doe", pronghorn: "doe", bear: "sow" };
-
-let map;
-let infoWindow;
-let SPECIES_STATS = null;
-const geoLayers = {};
-const loading = {};
-
-async function loadLayer(key) {
-  if (geoLayers[key]) return;
-  if (loading[key]) return loading[key];
-
-  loading[key] = (async () => {
-    const cfg = layers[key];
-    const params = new URLSearchParams({
-      where: "1=1",
-      outFields: "*",
-      outSR: "4326",
-      returnGeometry: "true",
-      f: "geojson"
-    });
-
-    const url = `${CPW}/${cfg.id}/query?${params}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const geojson = await response.json();
-    if (geojson.error) {
-      throw new Error(geojson.error.message || "CPW service error");
-    }
-    if (!geojson.features) {
-      throw new Error("The service returned no GeoJSON features.");
-    }
-
-    const dataLayer = L.geoJSON(geojson, {
-      style: () => ({
-        fillColor: cfg.color,
-        fillOpacity: cfg.opacity,
-        color: cfg.color,
-        opacity: 0.95,
-        weight: key === "gmu" ? 2 : 1
-      })
-    }).addTo(map);
-
-    dataLayer.eachLayer(layer => {
-      layer.on("click", event => {
-        const props = layer.feature.properties || {};
-
-        const title = `${cfg.name} — ${Object.entries(props)
-          .find(([k, v]) =>
-            /GMUID|ELKDAU|DEERDAU|PROPNAME|NAME/i.test(k) &&
-            v !== null && v !== ""
-          )?.[1] ?? "Feature details"}`;
-
-        const box = document.createElement("div");
-        const heading = document.createElement("strong");
-        heading.textContent = title;
-        box.appendChild(heading);
-
-        Object.entries(props).slice(0, 12).forEach(([key, value]) => {
-          const row = document.createElement("div");
-          row.textContent = `${key}: ${value ?? ""}`;
-          box.appendChild(row);
-        });
-
-        // Attach per-GMU big-game stats when clicking a GMU boundary.
-        if (SPECIES_STATS && key === "gmu") {
-          const gmuCode = String(props.GMUID ?? props.GMU ?? "").padStart(3, "0");
-          const season = document.getElementById("seasonSelect").value;
-          const year = document.getElementById("yearSelect").value;
-          const sex = document.getElementById("sexSelect").value;
-          const species = document.getElementById("speciesSelect").value;
-          const statsBox = document.createElement("div");
-          statsBox.style.marginTop = "6px";
-          let any = false;
-
-          const table =
-            (SPECIES_STATS.seasons?.[species]?.[season] || {})[year] ||
-            (season === "all" ? SPECIES_STATS[species]?.units : null);
-          const raw = table && table[gmuCode];
-
-          if (sex === "licenses") {
-            // License-sex mode: draw licenses broken down by tag sex.
-            const lic = (SPECIES_STATS.licenses?.[species] || {})[gmuCode];
-            if (lic) {
-              any = true;
-              const total = lic.bull + lic.cow + lic.either;
-              const line = document.createElement("div");
-              line.textContent =
-                `${species[0].toUpperCase() + species.slice(1)} — ${total} draw licenses: ` +
-                `${lic.bull} ${SEX_M[species]} · ${lic.cow} ${SEX_F[species]} · ${lic.either} either-sex`;
-              statsBox.appendChild(line);
-            }
-          } else if (raw) {
-            // Harvest mode; sex filter excludes young (calves/fawns) rows.
-            const male = raw.males ?? 0, female = raw.females ?? 0;
-            const skip = (sex === "males" && male === 0) || (sex === "females" && female === 0);
-            if (!skip) {
-              const shown = sex === "males" ? male : sex === "females" ? female : raw.harvest;
-              const note = sex !== "any" && (raw.young ?? 0) > 0 ? ` (+${raw.young} young not shown)` : "";
-              any = true;
-              const line = document.createElement("div");
-              const parts = [`harvest ${shown}${note}`];
-              if (sex === "any" && raw.hunters != null) parts.push(`hunters ${raw.hunters}`);
-              if (sex === "any" && raw.success_pct != null) parts.push(`success ${raw.success_pct}%`);
-              line.textContent = `${species[0].toUpperCase() + species.slice(1)} — ${parts.join(" · ")}`;
-              statsBox.appendChild(line);
-            }
-          }
-          if (any) box.appendChild(statsBox);
-          // Always update the stats panel below the map on every GMU click,
-          // even when there is no data for the current filter combination.
-          showStatCard(gmuCode);
-        }
-
-        L.popup().setLatLng(event.latlng).setContent(box).openOn(map);
-      });
-    });
-
-    geoLayers[key] = dataLayer;
-    updateStatus(`${cfg.name} loaded (${geojson.features.length} features).`);
-    if (key === "gmu") setupSearch();
-  })();
-
-  try {
-    await loading[key];
-  } finally {
-    delete loading[key];
-  }
-}
-
-
-// ---- GMU search & highlight ----
-let highlighted = null;
-let highlightOutline = null;
-
-function setupSearch() {
-  const gmuLayer = geoLayers.gmu;
-  if (!gmuLayer) return;
-
-  const units = new Map(); // unit number -> layer
-  gmuLayer.eachLayer(layer => {
-    const props = layer.feature.properties || {};
-    const num = props.GMUID ?? props.gmuid ?? props.GMU;
-    if (num != null) units.set(String(num).padStart(3, "0"), layer);
-  });
-
-  const datalist = document.getElementById("gmuList");
-  datalist.innerHTML = "";
-  for (const unit of [...units.keys()].sort()) {
-    const opt = document.createElement("option");
-    opt.value = unit;
-    datalist.appendChild(opt);
-  }
-
-  const input = document.getElementById("gmuSearch");
-  const status = document.getElementById("searchStatus");
-  input.disabled = false;
-  status.textContent = `${units.size} units searchable.`;
-
-  function doSearch() {
-    const raw = input.value.trim();
-    if (!raw) return;
-    const query = raw.padStart(3, "0");
-    const layer = units.get(query);
-    if (!layer) {
-      status.textContent = `No unit "${raw}". Try 3 digits like 201.`;
-      return;
-    }
-    status.textContent = `Unit ${query} highlighted.`;
-    highlightUnit(query, layer);
-    input.value = "";
-  }
-
-  // 'change' only fires on blur; also handle Enter, the Go button, and datalist picks.
-  input.addEventListener("change", doSearch);
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      doSearch();
-    }
-  });
-  document.getElementById("gmuSearchBtn").addEventListener("click", doSearch);
-}
-
-function highlightUnit(unit, layer) {
-  const mapLayers = geoLayers.gmu;
-  if (highlighted) {
-    mapLayers.resetStyle(highlighted);
-    highlighted = null;
-  }
-  if (highlightOutline) {
-    map.removeLayer(highlightOutline);
-    highlightOutline = null;
-  }
-
-  highlighted = layer;
-  layer.setStyle({
-    fillColor: "#facc15",
-    fillOpacity: 0.45,
-    color: "#facc15",
-    weight: 4,
-    opacity: 1
-  });
-  layer.bringToFront();
-
-  // Dashed pulsing-style outline ring around the selected polygon
-  highlightOutline = L.polyline(layer.getLatLngs().flat ? layer.getLatLngs().flat() : layer.getLatLngs(), {
-    color: "#fde047",
-    weight: 10,
-    opacity: 0.35,
-    dashArray: "1 12",
-    lineCap: "round",
-    interactive: false
-  }).addTo(map);
-
-  map.fitBounds(layer.getBounds(), { padding: [40, 40] });
-  showStatCard(unit);
-}
-
-function updateStatus(message) {
-  const status = document.getElementById("status");
-  const row = document.createElement("div");
-  row.textContent = message;
-  status.appendChild(row);
-}
-
-async function initMap() {
-  map = L.map("map", {
-    center: [39.0, -105.5],
-    zoom: 7
-  });
-
-  const apiKey = "{{ maptiler_key|escapejs }}";
-
-  // Load pre-extracted per-GMU big-game stats (harvest + licenses).
-  try {
-    const res = await fetch("{% static 'hunting/elk_stats.json' %}");
-    if (res.ok) SPECIES_STATS = await res.json();
-  } catch (e) { /* stats are optional */ }
-  L.tileLayer(
-    `https://api.maptiler.com/maps/outdoor-v2/{z}/{x}/{y}.png?key=${encodeURIComponent(apiKey)}`,
-    {
-      tileSize: 512,
-      zoomOffset: -1,
-      maxZoom: 22,
-      attribution:
-        '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> ' +
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-    }
-  ).addTo(map);
-
-  for (const key of Object.keys(layers)) {
-    document.getElementById(key).addEventListener("change", async e => {
-      try {
-        if (e.target.checked) await loadLayer(key);
-        if (geoLayers[key]) {
-          geoLayers[key].setStyle({
-            fillColor: layers[key].color,
-            fillOpacity: layers[key].opacity,
-            color: layers[key].color,
-            opacity: 0.95,
-            weight: key === "gmu" ? 2 : 1
-          });
-          if (!e.target.checked) map.removeLayer(geoLayers[key]);
-          else geoLayers[key].addTo(map);
-        }
-      } catch (error) {
-        updateStatus(`${layers[key].name}: ${error.message}`);
-      }
-    });
-  }
-
-  // Load the default visible layers.
-  for (const key of ["gmu", "public"]) {
-    try {
-      await loadLayer(key);
-    } catch (error) {
-      updateStatus(`${layers[key].name}: ${error.message}`);
-    }
-  }
-}
-
-
-// ---- GMU stats card ----
-const statCard = document.getElementById("statCard");
-const statCardTitle = document.getElementById("statCardTitle");
-const statCardBody = document.getElementById("statCardBody");
-document.getElementById("statCardClose").addEventListener("click", () => {
-  statCard.hidden = true;
-});
-
-function pctArrow(prev, curr) {
-  if (prev == null || curr == null) return "";
-  if (curr > prev) return " ▲";
-  if (curr < prev) return " ▼";
-  return "";
-}
-
-const statTabs = document.getElementById("statTabs");
-let activeTabSpecies = "all";
-
-function renderTabs(speciesList) {
-  statTabs.innerHTML = "";
-  if (speciesList.length <= 1) {
-    statTabs.hidden = true;
-    return;
-  }
-  statTabs.hidden = false;
-  const labels = { all: "All", elk: "Elk", deer: "Deer", pronghorn: "Pronghorn", bear: "Bear" };
-  for (const key of ["all", ...speciesList]) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = labels[key] || key;
-    if (key === activeTabSpecies) btn.classList.add("active");
-    btn.addEventListener("click", () => {
-      activeTabSpecies = key;
-      if (showStatCard._last) showStatCard(showStatCard._last);
-    });
-    statTabs.appendChild(btn);
-  }
-}
-
-function showStatCard(gmuCode) {
-  const season = document.getElementById("seasonSelect").value;
-  const sex = document.getElementById("sexSelect").value;
-  const speciesChoice = document.getElementById("speciesSelect").value;
-  const allSpecies = speciesChoice === "all"
-    ? ["elk", "deer", "pronghorn", "bear"]
-    : [speciesChoice];
-  // Tab filter: on mobile the tabs let you focus one species without scrolling.
-  const speciesList = activeTabSpecies === "all"
-    ? allSpecies
-    : allSpecies.filter(s => s === activeTabSpecies);
-  const years = (SPECIES_STATS.harvest_years || []).slice().sort();
-
-  const seasonLabel = document.getElementById("seasonSelect").selectedOptions[0].textContent;
-  statCardTitle.textContent =
-    `${gmuCode} · ${seasonLabel}${speciesList.length === 1 ? ` — ${speciesList[0][0].toUpperCase() + speciesList[0].slice(1)}` : " — all species"}`;
-
-  statCardBody.textContent = "";
-  if (activeTabSpecies !== "all" && !allSpecies.includes(activeTabSpecies)) activeTabSpecies = "all";
-  renderTabs(allSpecies);
-
-  if (sex === "licenses") {
-    let anyLic = false;
-    for (const species of speciesList) {
-      const lic = (SPECIES_STATS.licenses?.[species] || {})[gmuCode];
-      if (!lic) continue;
-      anyLic = true;
-      const block = document.createElement("div");
-      block.className = "stat-species-block";
-      const title = document.createElement("div");
-      title.className = "stat-species-title";
-      const name = document.createElement("strong");
-      name.textContent = species[0].toUpperCase() + species.slice(1);
-      const colHead = document.createElement("span");
-      colHead.className = "colhead";
-      colHead.textContent = `${SPECIES_STATS.license_year} draw`;
-      title.append(name, colHead);
-      block.appendChild(title);
-      const total = lic.bull + lic.cow + lic.either;
-      const row = document.createElement("div");
-      row.className = "stat-row";
-      const l = document.createElement("span");
-      l.textContent = "Total";
-      const r = document.createElement("span");
-      r.textContent = total;
-      row.append(l, r);
-      block.appendChild(row);
-      const rowB = document.createElement("div");
-      rowB.className = "stat-row";
-      const lb = document.createElement("span");
-      lb.textContent = SEX_M[species];
-      const rb = document.createElement("span");
-      rb.textContent = lic.bull;
-      rowB.append(lb, rb);
-      block.appendChild(rowB);
-      const rowF = document.createElement("div");
-      rowF.className = "stat-row";
-      const lf = document.createElement("span");
-      lf.textContent = SEX_F[species];
-      const rf = document.createElement("span");
-      rf.textContent = lic.cow;
-      rowF.append(lf, rf);
-      block.appendChild(rowF);
-      const rowE = document.createElement("div");
-      rowE.className = "stat-row";
-      const le = document.createElement("span");
-      le.textContent = "Either sex";
-      const re = document.createElement("span");
-      re.textContent = lic.either;
-      rowE.append(le, re);
-      block.appendChild(rowE);
-      statCardBody.appendChild(block);
-    }
-    if (!anyLic) statCardBody.textContent = "No draw license data for this unit.";
-    statCard.hidden = false;
-    statCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    return;
-  }
-
-  // Harvest by year for the selected season + sex, one card per species.
-  for (const species of speciesList) {
-    const block = document.createElement("div");
-    block.className = "stat-species-block";
-
-    const title = document.createElement("div");
-    title.className = "stat-species-title";
-    const name = document.createElement("strong");
-    name.textContent = species[0].toUpperCase() + species.slice(1);
-    const colHead = document.createElement("span");
-    colHead.className = "colhead";
-    colHead.textContent = "Harvest · Success";
-    title.append(name, colHead);
-    block.appendChild(title);
-
-    let last = null;
-    let rowCount = 0;
-    for (const year of [...years].sort()) {
-      const raw = ((SPECIES_STATS.seasons?.[species]?.[season] || {})[year] || {})[gmuCode];
-      if (!raw) continue;
-      const male = raw.males ?? 0, female = raw.females ?? 0;
-      if ((sex === "males" && male === 0) || (sex === "females" && female === 0)) continue;
-      const shown = sex === "males" ? male : sex === "females" ? female : raw.harvest;
-
-      const row = document.createElement("div");
-      row.className = "stat-row";
-      const left = document.createElement("span");
-      if (String(year) === document.getElementById("yearSelect").value) {
-        left.textContent = `${year} ←`;
-        left.style.fontWeight = "700";
-      } else {
-        left.textContent = year;
-        left.style.fontWeight = "";
-      }
-      const right = document.createElement("span");
-      const arrow = pctArrow(last, shown);
-      if (arrow) {
-        right.className = arrow.trim() === "▲" ? "trend-up" : "trend-down";
-      }
-      right.appendChild(document.createTextNode(`${shown}`));
-      if (arrow) {
-        const arrowSpan = document.createElement("span");
-        arrowSpan.className = "trend-arrow";
-        arrowSpan.textContent = arrow.trim();
-        right.appendChild(arrowSpan);
-      }
-      if (sex === "any" && raw.success_pct != null) {
-        right.appendChild(document.createTextNode(` · ${raw.success_pct}%`));
-      }
-      row.append(left, right);
-      block.appendChild(row);
-
-      // Sex breakdown row beneath the year row.
-      if (sex === "any" && (raw.males != null || raw.females != null)) {
-        const sexRow = document.createElement("div");
-        sexRow.className = "stat-sexrow";
-        const terms = {
-          elk: ["bulls", "cows", "calves"],
-          deer: ["bucks", "does", "fawns"],
-          pronghorn: ["bucks", "does", "fawns"],
-          bear: ["boars", "sows", null],
-        };
-        const [mTerm, fTerm, yTerm] = terms[species] || ["males", "females", "young"];
-        const bits = [];
-        if (raw.males) bits.push(`${raw.males} ${mTerm}`);
-        if (raw.females) bits.push(`${raw.females} ${fTerm}`);
-        if (yTerm && raw.young) bits.push(`${raw.young} ${yTerm}`);
-        sexRow.textContent = bits.join(" · ");
-        block.appendChild(sexRow);
-      }
-      last = shown;
-      rowCount++;
-    }
-
-    // Per-season harvest breakdown for the selected year (only in "all seasons" view).
-    if (sex === "any") {
-      const seasonTables = SPECIES_STATS.seasons?.[species] || {};
-      const seasonDefs = [
-        ["rifle_1", "Rifle 1"], ["rifle_2", "Rifle 2"], ["rifle_3", "Rifle 3"],
-        ["rifle_4", "Rifle 4"], ["rifle", "Rifle (all)"], ["september", "September"],
-        ["archery", "Archery"], ["muzzleloader", "Muzzleloader"],
-      ];
-      const seasonRows = [];
-      for (const [key, label] of seasonDefs) {
-        const row = ((seasonTables[key] || {})[String(document.getElementById("yearSelect").value)] || {})[gmuCode];
-        if (!row || row.harvest == null) continue;
-        seasonRows.push({ label, harvest: row.harvest, success: row.success_pct });
-      }
-      if (seasonRows.length > 1) {
-        const sub = document.createElement("div");
-        sub.className = "stat-seasons";
-        const subHead = document.createElement("div");
-        subHead.className = "stat-seasons-head";
-        subHead.textContent = `By season (${document.getElementById("yearSelect").value})`;
-        sub.appendChild(subHead);
-        for (const s of seasonRows) {
-          const r = document.createElement("div");
-          r.className = "stat-season-row";
-          const left = document.createElement("span");
-          left.textContent = s.label;
-          const right = document.createElement("span");
-          right.textContent = `${s.harvest}${s.success != null ? ` · ${s.success}%` : ""}`;
-          r.append(left, right);
-          sub.appendChild(r);
-        }
-        block.appendChild(sub);
-      }
-    }
-
-    if (!rowCount && !block.querySelector(".stat-seasons")) continue;
-    statCardBody.appendChild(block);
-  }
-  if (!statCardBody.childElementCount) {
-    statCardBody.textContent = "No harvest data for this unit, season, and sex.";
-  }
-  statCard.hidden = false;
-  statCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-
-// Re-render the card when pickers change.
-for (const id of ["speciesSelect", "seasonSelect", "sexSelect", "yearSelect"]) {
-  document.getElementById(id).addEventListener("change", () => {
-    if (!statCard.hidden && showStatCard._last) showStatCard(showStatCard._last);
-  });
-}
-const _origShow = showStatCard;
-showStatCard = function (gmu) { showStatCard._last = gmu; _origShow(gmu); };
-
-window.initMap = initMap;
-initMap();
-</script>
+<script src="{% static 'js/maps.js' %}"></script>
 {% endblock js %}
+

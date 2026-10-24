@@ -1,0 +1,263 @@
+/* Colorado Hunting Map page styles (extracted from templates/pages/maps.html) */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
+#app {
+  display: flex;
+  min-height: 600px;
+  height: calc(100vh - 180px);
+  position: relative;
+}
+#sidebar {
+  width: 285px;
+  padding: 18px;
+  overflow-y: auto;
+  background: #17232d;
+  color: white;
+  box-sizing: border-box;
+  border-radius: 12px 0 0 12px;
+}
+#map {
+  flex: 1;
+  min-width: 0;
+  min-height: 600px;
+}
+#app h2 {
+  font-size: 21px;
+  margin-top: 0;
+}
+#app h3 {
+  font-size: 15px;
+  margin-top: 24px;
+}
+#app label {
+  display: block;
+  margin: 14px 0;
+  cursor: pointer;
+}
+#app input {
+  margin-right: 8px;
+}
+#status {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+#info {
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.note {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+.stats-links a {
+  display: block;
+  margin: 6px 0;
+  color: #7dd3fc;
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.stats-links a:hover {
+  text-decoration: underline;
+}
+
+/* Inline styles moved out of the sidebar markup */
+.search-row {
+  display: flex;
+  gap: 6px;
+}
+#gmuSearch {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid #33475a;
+  background: #0f1922;
+  color: #e2e8f0;
+  box-sizing: border-box;
+}
+#gmuSearchBtn {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid #33475a;
+  background: #24452e;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.filter-label {
+  margin: 6px 0;
+}
+.filter-select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.filter-note {
+  margin-top: 6px;
+}
+#searchStatus {
+  margin-top: 5px;
+}
+
+/* Full-width stats panel below the map */
+.stat-panel {
+  margin: 0 auto 3rem;
+  max-width: 1200px;
+  background: #fff;
+  border: 1px solid #dce5da;
+  border-radius: 18px;
+  box-shadow: 0 12px 38px rgba(31, 52, 34, 0.09);
+  overflow: hidden;
+}
+.stat-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 22px;
+  background: #24452e;
+  color: #fff;
+  font-size: 15px;
+}
+.stat-panel-header button {
+  border: none;
+  background: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #cfe0cf;
+}
+.stat-panel-header button:hover {
+  color: #fff;
+}
+.stat-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 22px 0;
+  overflow-x: auto;
+}
+.stat-tabs button {
+  padding: 6px 14px;
+  border: 1px solid #c8d4c6;
+  border-radius: 999px;
+  background: #fff;
+  color: #26332a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.stat-tabs button.active {
+  background: #24452e;
+  border-color: #24452e;
+  color: #fff;
+}
+.stat-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  padding: 20px 22px;
+  font-size: 13.5px;
+  color: #26332a;
+}
+.stat-species-block {
+  border: 1px solid #e4ebe2;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #f7faf5;
+}
+.stat-species-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #172f20;
+}
+.stat-species-title .colhead {
+  font-size: 11px;
+  font-weight: 400;
+  color: #6b776d;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px dashed #e8eee6;
+}
+.stat-row:last-child {
+  border-bottom: none;
+}
+.stat-row .trend-up {
+  color: #16a34a;
+  font-weight: 700;
+}
+.stat-row .trend-down {
+  color: #dc2626;
+  font-weight: 700;
+}
+.stat-row .trend-arrow {
+  font-size: 15px;
+  margin-left: 3px;
+}
+.stat-seasons {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #e8eee6;
+}
+.stat-seasons-head {
+  font-size: 11px;
+  font-weight: 700;
+  color: #44584a;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+.stat-season-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: #44584a;
+  padding: 1px 0;
+}
+.stat-sexrow {
+  padding: 0 0 4px 14px;
+  font-size: 11.5px;
+  color: #6b776d;
+}
+.stat-note {
+  padding: 0 22px 16px;
+  font-size: 11.5px;
+  color: #6b776d;
+  line-height: 1.5;
+}
+
+/* Mobile: stack map above a full-width sidebar */
+@media (max-width: 650px) {
+  #app {
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+  #map {
+    min-height: 45vh;
+    order: -1;
+    border-radius: 0;
+  }
+  #sidebar {
+    width: 100%;
+    padding: 12px;
+    max-height: none;
+    border-radius: 0 0 12px 12px;
+  }
+  #sidebar h2 {
+    font-size: 17px;
+  }
+}
