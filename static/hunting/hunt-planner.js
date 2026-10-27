@@ -5,6 +5,7 @@
   const form = document.getElementById("huntForm");
   const speciesInput = document.getElementById("species");
   const methodInput = document.getElementById("method");
+  const seasonInput = document.getElementById("season");
   const gmuInput = document.getElementById("gmu");
   const licenseInput = document.getElementById("license");
 
@@ -87,6 +88,7 @@
     !form ||
     !speciesInput ||
     !methodInput ||
+    !seasonInput ||
     !gmuInput ||
     !licenseInput ||
     !licenseInfo ||
@@ -98,6 +100,32 @@
   ) {
     return;
   }
+
+  // ----------------------------------------
+  // Method ↔ season coupling
+  // ----------------------------------------
+  // Archery and Muzzleloader ARE their own season windows, so choosing
+  // that method locks the season select; Rifle frees the select for
+  // 1st–4th rifle seasons.
+  const seasonHint = document.getElementById("seasonHint");
+
+  function syncSeasonWithMethod() {
+    const method = methodInput.value;
+    if (!seasonInput) return;
+
+    if (method === "Archery" || method === "Black Powder") {
+      const locked = method === "Archery" ? "Archery" : "Muzzleloader";
+      seasonInput.value = locked;
+      seasonInput.disabled = true;
+      if (seasonHint) seasonHint.hidden = false;
+    } else {
+      seasonInput.disabled = false;
+      if (seasonHint) seasonHint.hidden = true;
+    }
+  }
+
+  methodInput.addEventListener("change", syncSeasonWithMethod);
+  syncSeasonWithMethod();
 
   // ----------------------------------------
   // License guidance
@@ -182,6 +210,7 @@
 
     const species = speciesInput.value;
     const method = methodInput.value;
+    const season = seasonInput.disabled ? seasonInput.value : seasonInput.value;
     const gmu = gmuInput.value.trim();
     const licenseAnswer = licenseInput.value;
 
@@ -198,6 +227,13 @@
       return;
     }
 
+    if (!seasonInput.disabled && !seasonInput.value) {
+      alert("Please choose a season before building your hunt plan.");
+      seasonInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      seasonInput.focus();
+      return;
+    }
+
     const licenseText =
       LICENSE_SUMMARY_TEXT[licenseAnswer] || "Check CPW license information";
 
@@ -205,6 +241,7 @@
 
     addSummaryItem("Species", species);
     addSummaryItem("Hunting method", method);
+    addSummaryItem("Season", season);
     addSummaryItem("Game Management Unit", `GMU ${gmu}`);
     addSummaryItem("License status", licenseText);
 
@@ -216,6 +253,20 @@
     summary.appendChild(note);
 
     results.classList.remove("d-none");
+
+    // Persist the plan so the Your Trip page can display it as a card.
+    try {
+      localStorage.setItem("rmc_hunt_plan_v1", JSON.stringify({
+        species: species,
+        method: method,
+        season: season,
+        gmu: gmu,
+        license: licenseText,
+        savedAt: new Date().toISOString(),
+      }));
+    } catch {
+      /* storage unavailable — planner still works, plan just won't carry over */
+    }
 
     results.scrollIntoView({
       behavior: "smooth",

@@ -1,13 +1,69 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Resources — Rocky Mountain Coalition{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/resources.css' %}">
+{% endblock extra_css %}
 
 {% block content %}
 <section class="container my-5">
   <h1 class="hunt-intro h2">Resources</h1>
   <p class="lead text-center">
-    Maps, tools, and reference material to help you prepare for the season.
-    Content coming soon.
+    Tools and reference material to help you prepare for the season.
+    Click a card to expand it.
   </p>
+
+  <div class="resource-grid">
+    {% for card in resources %}
+    {% if card.pdf %}
+    {# Link card: hero opens a PDF directly, nothing to expand #}
+    <a class="resource-card resource-card--link" href="{% static card.pdf %}" target="_blank" rel="noopener">
+      <span class="resource-hero">
+        <img class="resource-img" src="{% static card.img %}" alt="">
+        <span class="resource-overlay">
+          <span class="resource-kicker">{{ card.kicker }}</span>
+          <span class="resource-title">{{ card.title }}</span>
+          <span class="resource-hint">View PDF <span aria-hidden="true">↗</span></span>
+        </span>
+      </span>
+    </a>
+    {% else %}
+    {# Expandable card: hero toggles the body #}
+    <article class="resource-card" data-resource>
+      <button class="resource-hero" type="button"
+              aria-expanded="false" aria-controls="res-{{ card.id }}">
+        <img class="resource-img" src="{% static card.img %}" alt="">
+        <div class="resource-overlay">
+          <span class="resource-kicker">{{ card.kicker }}</span>
+          <span class="resource-title">{{ card.title }}</span>
+          <span class="resource-hint">Click to expand <span aria-hidden="true">▾</span></span>
+        </div>
+      </button>
+      <div class="resource-body" id="res-{{ card.id }}" hidden>
+        {% for section in card.sections %}
+          {% if section.heading %}<h4 class="resource-heading">{{ section.heading }}</h4>{% endif %}
+          {% if section.paras %}
+            {% for para in section.paras %}<p class="resource-para">{{ para }}</p>{% endfor %}
+          {% endif %}
+          <ul>
+            {% for bullet in section.bullets %}
+              <li>{{ bullet }}</li>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+        {% for label, href in card.links %}
+          <a class="resource-link" href="{{ href }}"{% if href|slice:"4" == "http" %} target="_blank" rel="noopener"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </div>
+    </article>
+    {% endif %}
+    {% endfor %}
+  </div>
 </section>
 {% endblock content %}
+
+{% block js %}
+<script src="{% static 'js/resources.js' %}"></script>
+{% endblock js %}

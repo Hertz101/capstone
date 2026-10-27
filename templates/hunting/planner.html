@@ -199,10 +199,36 @@
               </select>
             </section>
 
-            <!-- Step 3: GMU -->
-            <section class="hunt-step" aria-labelledby="gmuHeading">
+            <!-- Step 3: Season -->
+            <section class="hunt-step" aria-labelledby="seasonHeading">
               <div class="step-heading">
                 <span class="hunt-number" aria-hidden="true">3</span>
+                <h4 id="seasonHeading">Which season do you want to hunt?</h4>
+              </div>
+
+              <p class="step-description">
+                Pick the season or method window you're targeting.
+              </p>
+
+              <label for="season" class="form-label">Season</label>
+              <select id="season" name="season" class="form-select" required>
+                <option value="">Choose a season</option>
+                <option value="Archery">Archery</option>
+                <option value="Muzzleloader">Muzzleloader</option>
+                <option value="1st Rifle">1st Rifle</option>
+                <option value="2nd Rifle">2nd Rifle</option>
+                <option value="3rd Rifle">3rd Rifle</option>
+                <option value="4th Rifle">4th Rifle</option>
+              </select>
+              <p class="step-description" id="seasonHint" hidden>
+                Season follows your hunting method — no separate choice needed.
+              </p>
+            </section>
+
+            <!-- Step 4: GMU -->
+            <section class="hunt-step" aria-labelledby="gmuHeading">
+              <div class="step-heading">
+                <span class="hunt-number" aria-hidden="true">4</span>
                 <h4 id="gmuHeading">Choose your hunting unit</h4>
               </div>
 
@@ -262,10 +288,10 @@
               </a>
             </section>
 
-            <!-- Step 4: License -->
+            <!-- Step 5: License -->
             <section class="hunt-step" aria-labelledby="licenseHeading">
               <div class="step-heading">
-                <span class="hunt-number" aria-hidden="true">4</span>
+                <span class="hunt-number" aria-hidden="true">5</span>
                 <h4 id="licenseHeading">Check your license status</h4>
               </div>
 
@@ -325,6 +351,11 @@
             tabindex="-1">
             <h3>Your Hunt Plan</h3>
             <ul id="huntSummary" class="list-group"></ul>
+            <a id="planToTripBtn"
+               href="{% url 'your_trip' %}"
+               class="btn btn-hunt btn-lg w-100 mt-3">
+               Add to Your Trip <span aria-hidden="true">→</span>
+            </a>
           </section>
 
         </div>

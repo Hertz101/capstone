@@ -1,12 +1,110 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Resources — Rocky Mountain Coalition{% endblock title %}
+{% block title %}Your Trip — Rocky Mountain Coalition{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/your_trip.css' %}">
+{% endblock extra_css %}
 
 {% block content %}
 <section class="container my-5">
   <h1 class="hunt-intro h2">Your Trip</h1>
   <p class="lead text-center">
-    Content coming soon.
+    Build your pre-hunt checklist. Check items off as you pack —
+    your progress is saved on this device.
+  </p>
+
+  <div class="trip-toolbar">
+    <span id="tripProgress" class="trip-progress" aria-live="polite">0 of 0 packed</span>
+    <div class="trip-toolbar-buttons">
+      <button type="button" id="tripReset" class="btn btn-sm btn-outline-danger">Reset checklist</button>
+    </div>
+  </div>
+
+  <div class="trip-grid" id="tripChecklist">
+    {% for group in checklist %}
+    <section class="trip-group" data-group="{{ group.id }}">
+      <h3 class="trip-group-title">
+        <span class="trip-group-icon" aria-hidden="true">{{ group.icon }}</span>
+        {{ group.title }}
+      </h3>
+      <ul class="trip-items">
+        {% for item in group.items %}
+        <li>
+          <label class="trip-item">
+            <input type="checkbox" data-item="{{ group.id }}:{{ forloop.counter }}" data-label="{{ item }}">
+            <span class="trip-checkmark" aria-hidden="true"></span>
+            <span class="trip-item-label">{{ item }}</span>
+          </label>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="trip-add">
+        <input type="text" class="trip-add-input" placeholder="Add your own item…"
+               aria-label="Add item to {{ group.title }}">
+        <button type="button" class="trip-add-btn">Add</button>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+
+  <!-- My Hunt Plan card: populated from the Hunt Planner (localStorage) -->
+  <section class="plan-card" id="planCard" hidden data-planner-url="{% url 'planner' %}">
+    <div class="plan-header">
+      <h3>🎯 My Hunt Plan</h3>
+      <div class="plan-header-buttons">
+        <a id="planEditLink" href="{% url 'planner' %}" class="btn btn-sm btn-outline-light">Edit plan</a>
+      </div>
+    </div>
+    <div class="plan-body">
+      <dl class="plan-fields">
+        <div><dt>Species</dt><dd id="planSpecies">—</dd></div>
+        <div><dt>Season</dt><dd id="planSeason">—</dd></div>
+        <div><dt>Method</dt><dd id="planMethod">—</dd></div>
+        <div><dt>Unit</dt><dd id="planGmu">—</dd></div>
+        <div><dt>License</dt><dd id="planLicense">—</dd></div>
+      </dl>
+      <p class="plan-saved" id="planSavedAt"></p>
+      <p class="plan-note">
+        Created with the <a href="{% url 'planner' %}">Hunt Planner</a>.
+        This is a planning summary, not a tag or license — always confirm
+        current CPW regulations and access rules.
+      </p>
+    </div>
+  </section>
+
+  <!-- My Packing List: live summary of everything checked -->
+  <section class="packing-card" id="packingCard" aria-live="polite">
+    <div class="packing-header">
+      <h3>🎒 My Packing List</h3>
+      <div class="packing-header-buttons">
+        <button type="button" id="packingCopy" class="btn btn-sm btn-outline-light">Copy</button>
+        <button type="button" id="packingPrint" class="btn btn-sm btn-outline-light">Print</button>
+        <button type="button" id="groupChat" class="btn btn-sm btn-outline-light">Add to Chat</button>
+      </div>
+    </div>
+    <p class="packing-empty" id="packingEmpty">
+      Nothing selected yet — check items above to build your list.
+    </p>
+    <div id="packingBody" class="packing-body" hidden>
+      {% for group in checklist %}
+      <div class="packing-group" data-packing="{{ group.id }}">
+        <h4>{{ group.title }}</h4>
+        <ul></ul>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <p class="trip-note">
+    This list covers the basics — always verify season-specific requirements
+    (blaze orange, legal methods, tag possession) in the current CPW big-game
+    brochure before you leave.
   </p>
 </section>
 {% endblock content %}
+
+{% block js %}
+<script src="{% static 'js/your_trip.js' %}"></script>
+{% endblock js %}

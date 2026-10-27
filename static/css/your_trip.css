@@ -1,0 +1,347 @@
+/* Your Trip: pre-hunt checklist */
+
+.trip-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: 1000px;
+  margin: 0 auto 1.25rem;
+}
+
+.trip-toolbar-buttons { display: flex; gap: 0.5rem; }
+
+.trip-progress {
+  color: var(--hunt-green-dark, #172f20);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.trip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+@media (max-width: 767.98px) {
+  .trip-grid { grid-template-columns: 1fr; }
+}
+
+.trip-group {
+  padding: 1.1rem 1.3rem 1.2rem;
+  border: 1px solid var(--hunt-border, #dce5da);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(31, 52, 34, 0.06);
+}
+
+.trip-group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 10px;
+  background: var(--hunt-green, #24452e);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.trip-group-icon { font-size: 1.1rem; }
+
+.trip-items {
+  margin: 0 0 0.9rem;
+  padding: 0;
+  list-style: none;
+}
+
+.trip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.3rem 0.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.trip-item:hover { background: #f4f8f1; }
+
+.trip-item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Custom checkbox */
+.trip-checkmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  border: 2px solid #9db19a;
+  border-radius: 6px;
+  background: #fff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.trip-checkmark::after {
+  content: "";
+  display: none;
+  width: 10px;
+  height: 5px;
+  border-left: 2.5px solid #fff;
+  border-bottom: 2.5px solid #fff;
+  transform: rotate(-45deg) translate(0.5px, -1px);
+}
+
+.trip-item input:checked ~ .trip-checkmark {
+  border-color: var(--hunt-green, #24452e);
+  background: var(--hunt-green, #24452e);
+}
+
+.trip-item input:checked ~ .trip-checkmark::after { display: block; }
+
+.trip-item input:checked ~ .trip-item-label {
+  color: var(--hunt-muted, #6b776d);
+  text-decoration: line-through;
+}
+
+.trip-item input:focus-visible ~ .trip-checkmark {
+  outline: 3px solid var(--hunt-gold, #d8a75a);
+  outline-offset: 2px;
+}
+
+.trip-item-label { font-size: 0.92rem; line-height: 1.45; }
+
+.trip-item-remove {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0 0.35rem;
+  border: none;
+  background: none;
+  color: #b04a4a;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.trip-item:hover .trip-item-remove { opacity: 1; }
+.trip-item-remove:focus-visible { opacity: 1; outline: 2px solid var(--hunt-gold, #d8a75a); }
+
+/* Add-your-own row */
+.trip-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #e4ebe2;
+}
+
+.trip-add-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #d4ded2;
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.trip-add-input:focus {
+  border-color: #78967a;
+  outline: 2px solid rgba(36, 69, 46, 0.12);
+}
+
+.trip-add-btn {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--hunt-green, #24452e);
+  border-radius: 8px;
+  background: var(--hunt-green, #24452e);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.trip-add-btn:hover { background: var(--hunt-green-dark, #172f20); }
+
+.trip-note {
+  max-width: 1000px;
+  margin: 1.5rem auto 0;
+  color: var(--hunt-muted, #6b776d);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trip-checkmark { transition: none; }
+}
+
+/* My Hunt Plan card (populated from the Hunt Planner) */
+.plan-card {
+  max-width: 1000px;
+  margin: 1.5rem auto 0;
+  border: 1px solid var(--hunt-border, #dce5da);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(31, 52, 34, 0.08);
+  overflow: hidden;
+}
+
+.plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1.2rem;
+  background: var(--hunt-green-dark, #172f20);
+  color: #fff;
+}
+
+.plan-header h3 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+
+.plan-header-buttons { display: flex; gap: 0.5rem; }
+
+.plan-body { padding: 1.1rem 1.3rem 1.2rem; }
+
+.plan-fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+  margin: 0 0 0.6rem;
+}
+
+@media (max-width: 575.98px) {
+  .plan-fields { grid-template-columns: 1fr; }
+}
+
+.plan-fields > div {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #e4ebe2;
+  border-radius: 10px;
+  background: #f7faf5;
+}
+
+.plan-fields dt {
+  color: var(--hunt-muted, #6b776d);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-fields dd {
+  margin: 0.15rem 0 0;
+  color: var(--hunt-green-dark, #172f20);
+  font-size: 1rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.plan-saved {
+  margin: 0 0 0.4rem;
+  color: var(--hunt-muted, #6b776d);
+  font-size: 0.78rem;
+}
+
+.plan-note {
+  margin: 0;
+  color: var(--hunt-muted, #6b776d);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.plan-note a {
+  color: var(--hunt-green, #24452e);
+  font-weight: 700;
+}
+
+/* My Packing List summary card */
+.packing-card {
+  max-width: 1000px;
+  margin: 1.5rem auto 0;
+  border: 1px solid var(--hunt-green, #24452e);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(31, 52, 34, 0.1);
+  overflow: hidden;
+}
+
+.packing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1.2rem;
+  background: var(--hunt-green, #24452e);
+  color: #fff;
+}
+
+.packing-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.packing-header-buttons { display: flex; gap: 0.5rem; }
+
+.packing-empty {
+  margin: 0;
+  padding: 1.2rem;
+  color: var(--hunt-muted, #6b776d);
+  font-size: 0.9rem;
+}
+
+.packing-body {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+@media (max-width: 767.98px) {
+  .packing-body { grid-template-columns: 1fr; }
+}
+
+.packing-group h4 {
+  margin: 0 0 0.4rem;
+  color: var(--hunt-green-dark, #172f20);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.packing-group ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* Print: show only the packing list */
+@media print {
+  body.print-packing-only .trip-toolbar,
+  body.print-packing-only .trip-grid,
+  body.print-packing-only .trip-note,
+  body.print-packing-only header,
+  body.print-packing-only footer,
+  body.print-packing-only nav { display: none !important; }
+
+  body.print-packing-only .packing-card {
+    box-shadow: none;
+    border: 1px solid #333;
+  }
+
+  body.print-packing-only .packing-header-buttons { display: none; }
+}
