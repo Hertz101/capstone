@@ -25,8 +25,9 @@
     return;
   }
 
+  // FeatureServer base URL comes from cpw-config.js (shared with the map page).
   const CPW_GMU_QUERY =
-    "https://services5.arcgis.com/ttNGmDvKQA7oeDQ3/ArcGIS/rest/services/CPWAdminData/FeatureServer/6/query";
+    `${window.CPW_FEATURESERVER}/6/query`;
 
   let map;
   let gmuLayer = null;

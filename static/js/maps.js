@@ -3,8 +3,8 @@
 // Requires: Leaflet (L), and the page to carry the MapTiler key + stats URL
 // as data attributes on the #map element.
 
-const CPW =
-  "https://services5.arcgis.com/ttNGmDvKQA7oeDQ3/ArcGIS/rest/services/CPWAdminData/FeatureServer";
+// Colorado Parks & Wildlife admin boundaries FeatureServer (cpw-config.js).
+// Layer ids used by the app: 5 public-access, 6 GMU, 22 deer DAU, 23 elk DAU.
 
 const layers = {
   gmu: {
@@ -61,7 +61,7 @@ async function loadLayer(key) {
       f: "geojson",
     });
 
-    const url = `${CPW}/${cfg.id}/query?${params}`;
+    const url = `${window.CPW_FEATURESERVER}/${cfg.id}/query?${params}`;
     const response = await fetch(url);
 
     if (!response.ok) {

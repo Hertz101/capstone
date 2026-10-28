@@ -59,3 +59,100 @@ class PageViewTests(TestCase):
         # The home page no longer renders the map, so it does not need the key.
         response = self.client.get(reverse("home"))
         self.assertNotIn("MAPTILER_API_KEY", response.context)
+from django.contrib.staticfiles import finders
+
+from .content import PRE_HUNT_CHECKLIST, RESOURCE_CARDS
+
+
+class ChecklistDataTests(TestCase):
+    """Structural guarantees the Your Trip page and its JS rely on."""
+
+    def test_every_group_has_id_icon_title_and_items(self):
+        for group in PRE_HUNT_CHECKLIST:
+            self.assertTrue(group["id"], f"group missing id: {group}")
+            self.assertTrue(group["title"], f"group {group['id']} missing title")
+            self.assertTrue(group["icon"], f"group {group['id']} missing icon")
+            self.assertGreater(
+                len(group["items"]), 0, f"group {group['id']} has no items"
+            )
+
+    def test_group_ids_are_unique(self):
+        ids = [g["id"] for g in PRE_HUNT_CHECKLIST]
+        self.assertEqual(len(ids), len(set(ids)), f"duplicate group ids: {ids}")
+
+    def test_all_items_are_nonempty_strings(self):
+        for group in PRE_HUNT_CHECKLIST:
+            for item in group["items"]:
+                self.assertIsInstance(item, str)
+                self.assertTrue(item.strip(), f"blank item in {group['id']}")
+
+    def test_checklist_renders_every_group(self):
+        response = self.client.get(reverse("your_trip"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context["checklist"]), PRE_HUNT_CHECKLIST
+        )
+
+
+class ResourceCardDataTests(TestCase):
+    """Structural guarantees the Resources page template relies on."""
+
+    def test_every_card_has_required_fields(self):
+        for card in RESOURCE_CARDS:
+            for field in ("id", "img", "kicker", "title"):
+                self.assertTrue(
+                    card.get(field), f"card {card.get('id')} missing {field}"
+                )
+            # A card is either expandable (sections) or a PDF link — not both, not neither.
+            if "pdf" in card:
+                self.assertNotIn("sections", card, f"card {card['id']} has both pdf and sections")
+            else:
+                self.assertIn("sections", card, f"card {card['id']} has neither pdf nor sections")
+
+    def test_card_ids_are_unique(self):
+        ids = [c["id"] for c in RESOURCE_CARDS]
+        self.assertEqual(len(ids), len(set(ids)), f"duplicate card ids: {ids}")
+
+    def test_sections_have_heading_and_bullets(self):
+        for card in RESOURCE_CARDS:
+            for section in card.get("sections", []):
+                self.assertIn("heading", section, f"card {card['id']} section missing heading")
+                self.assertTrue(
+                    section.get("bullets"), f"card {card['id']} section '{section['heading']}' has no bullets"
+                )
+
+    def test_internal_link_placeholders_are_valid_url_names(self):
+        from django.urls import NoReverseMatch, reverse
+
+        for card in RESOURCE_CARDS:
+            for _, target in card.get("links", []):
+                if target.startswith("{"):
+                    name = target[1:-1]
+                    try:
+                        reverse(name)
+                    except NoReverseMatch:
+                        self.fail(f"card {card['id']} links to unknown url name '{name}'")
+
+    def test_pdf_paths_exist_in_static(self):
+        for card in RESOURCE_CARDS:
+            pdf = card.get("pdf")
+            if pdf:
+                self.assertIsNotNone(
+                    finders.find(pdf), f"card {card['id']} references missing static PDF {pdf}"
+                )
+
+    def test_resource_view_resolves_placeholders(self):
+        response = self.client.get(reverse("resource"))
+        self.assertEqual(response.status_code, 200)
+        cards = response.context["resources"]
+        by_id = {c["id"]: c for c in cards}
+        planner_card = by_id["planning"]
+        href = dict(planner_card["links"])["Open the Hunt Planner →"]
+        self.assertTrue(href.startswith("/"), "internal placeholder was not resolved to a path")
+        self.assertFalse(href.startswith("{"))
+
+    def test_resource_view_does_not_mutate_shared_content(self):
+        # Views get shallow copies; the module-level dicts must keep raw placeholders.
+        self.client.get(reverse("resource"))
+        planning = next(c for c in RESOURCE_CARDS if c["id"] == "planning")
+        self.assertEqual(planning["links"][0][1], "{planner}")
