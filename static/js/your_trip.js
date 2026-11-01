@@ -38,6 +38,13 @@
   }
 
   function bindCheckbox(box) {
+    // Remember the human-readable label for each key so the group-chat
+    // sidebar can show real item names instead of raw state keys.
+    try {
+      const labels = JSON.parse(localStorage.getItem("rmc_trip_labels_v1")) || {};
+      labels[box.dataset.item] = box.dataset.label || box.dataset.item;
+      localStorage.setItem("rmc_trip_labels_v1", JSON.stringify(labels));
+    } catch { /* storage unavailable — sidebar will fall back to raw keys */ }
     box.addEventListener("change", () => {
       state[box.dataset.item] = box.checked;
       saveState();

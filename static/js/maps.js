@@ -79,16 +79,7 @@ async function loadLayer(key) {
     const dataLayer = L.geoJSON(geojson, {
       // DAU layers are boundary LINE features, not polygons — fill styling
       // is ignored on polylines, so they must be drawn as visible lines.
-      style: () =>
-        cfg.isLine
-          ? { color: cfg.color, opacity: 0.9, weight: 3, dashArray: "8 5" }
-          : {
-              fillColor: cfg.color,
-              fillOpacity: cfg.opacity,
-              color: cfg.color,
-              opacity: 0.95,
-              weight: key === "gmu" ? 2 : 1,
-            },
+      style: () => layerStyle(cfg, key),
     }).addTo(map);
 
     dataLayer.eachLayer((layer) => {
@@ -119,10 +110,10 @@ async function loadLayer(key) {
             3,
             "0",
           );
-          const season = document.getElementById("seasonSelect").value;
-          const year = document.getElementById("yearSelect").value;
-          const sex = document.getElementById("sexSelect").value;
-          const species = document.getElementById("speciesSelect").value;
+          const season = document.getElementById("seasonSelect")?.value ?? "all";
+          const year = document.getElementById("yearSelect")?.value ?? "";
+          const sex = document.getElementById("sexSelect")?.value ?? "any";
+          const species = document.getElementById("speciesSelect")?.value ?? "elk";
           const statsBox = el("div");
           statsBox.style.marginTop = "6px";
           let any = false;
@@ -330,22 +321,7 @@ async function initMap() {
       try {
         if (e.target.checked) await loadLayer(key);
         if (geoLayers[key]) {
-          geoLayers[key].setStyle(
-            layers[key].isLine
-              ? {
-                  color: layers[key].color,
-                  opacity: 0.9,
-                  weight: 3,
-                  dashArray: "8 5",
-                }
-              : {
-                  fillColor: layers[key].color,
-                  fillOpacity: layers[key].opacity,
-                  color: layers[key].color,
-                  opacity: 0.95,
-                  weight: key === "gmu" ? 2 : 1,
-                },
-          );
+          geoLayers[key].setStyle(layerStyle(layers[key], key));
           if (!e.target.checked) map.removeLayer(geoLayers[key]);
           else geoLayers[key].addTo(map);
         }
@@ -363,15 +339,50 @@ async function initMap() {
       updateStatus(`${layers[key].name}: ${error.message}`);
     }
   }
+
+  // Deep link: /maps/?gmu=101 highlights and opens that unit's stat card.
+  // The GMU layer loads asynchronously, so retry until the unit is found.
+  const params = new URLSearchParams(window.location.search);
+  const gmuParam = params.get("gmu");
+  if (gmuParam) {
+    const input = document.getElementById("gmuSearch");
+    if (input) input.value = gmuParam;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      document.getElementById("gmuSearchBtn")?.click();
+      if (!document.getElementById("statCard")?.hidden || tries > 12) clearInterval(timer);
+    }, 500);
+  }
+}
+
+// Shared style for both the initial load and the checkbox re-style path.
+function layerStyle(cfg, key) {
+  // DAU layers are boundary LINE features, not polygons — fill styling
+  // is ignored on polylines, so they must be drawn as visible lines.
+  return cfg.isLine
+    ? { color: cfg.color, opacity: 0.9, weight: 3, dashArray: "8 5" }
+    : {
+        fillColor: cfg.color,
+        fillOpacity: cfg.opacity,
+        color: cfg.color,
+        opacity: 0.95,
+        weight: key === "gmu" ? 2 : 1,
+      };
 }
 
 // ---- GMU stats card ----
 const statCard = document.getElementById("statCard");
 const statCardTitle = document.getElementById("statCardTitle");
 const statCardBody = document.getElementById("statCardBody");
-document.getElementById("statCardClose").addEventListener("click", () => {
+const statCardClose = document.getElementById("statCardClose");
+
+if (!statCard || !statCardTitle || !statCardBody || !statCardClose) {
+  console.warn("GMU stats card elements are missing from this page.");
+} else {
+statCardClose.addEventListener("click", () => {
   statCard.hidden = true;
-});
+})}
 
 function pctArrow(prev, curr) {
   if (prev == null || curr == null) return "";
@@ -410,6 +421,9 @@ let activeTabSpecies = "all";
 
 function finishCard() {
   statCard.hidden = false;
+  // Enable "Share to group chat" once a unit is shown.
+  const shareBtn = document.getElementById("statShareChat");
+  if (shareBtn) shareBtn.disabled = false;
   statCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -440,10 +454,16 @@ function renderTabs(speciesList) {
   }
 }
 
-function showStatCard(gmuCode) {
-  const season = document.getElementById("seasonSelect").value;
-  const sex = document.getElementById("sexSelect").value;
-  const speciesChoice = document.getElementById("speciesSelect").value;
+function renderStatCard(gmuCode) {
+  if (!statCard || !statCardTitle || !statCardBody) return;
+  const seasonSelect = document.getElementById("seasonSelect");
+  const sexSelect = document.getElementById("sexSelect");
+  const speciesSelect = document.getElementById("speciesSelect");
+  if (!seasonSelect || !sexSelect || !speciesSelect) return;
+
+  const season = seasonSelect.value;
+  const sex = sexSelect.value;
+  const speciesChoice = speciesSelect.value;
   const allSpecies =
     speciesChoice === "all"
       ? ["elk", "deer", "pronghorn", "bear"]
@@ -455,8 +475,10 @@ function showStatCard(gmuCode) {
       : allSpecies.filter((s) => s === activeTabSpecies);
   const years = (SPECIES_STATS.harvest_years || []).slice().sort();
 
-  const seasonLabel =
-    document.getElementById("seasonSelect").selectedOptions[0].textContent;
+  const selectedSeasonOption = seasonSelect.selectedOptions[0];
+  const seasonLabel = selectedSeasonOption
+    ? selectedSeasonOption.textContent
+    : season || "All seasons";
   statCardTitle.textContent = `${gmuCode} · ${seasonLabel}${speciesList.length === 1 ? ` — ${speciesList[0][0].toUpperCase() + speciesList[0].slice(1)}` : " — all species"}`;
 
   statCardBody.textContent = "";
@@ -465,21 +487,7 @@ function showStatCard(gmuCode) {
   renderTabs(allSpecies);
 
   if (sex === "licenses") {
-    let anyLic = false;
-    for (const species of speciesList) {
-      const lic = (SPECIES_STATS.licenses?.[species] || {})[gmuCode];
-      if (!lic) continue;
-      anyLic = true;
-      const block = el("div", "stat-species-block");
-      block.appendChild(
-        speciesBlockHeader(species, `${SPECIES_STATS.license_year} draw`),
-      );
-      block.appendChild(statRow("Total", lic.bull + lic.cow + lic.either));
-      block.appendChild(statRow(SEX_M[species], lic.bull));
-      block.appendChild(statRow(SEX_F[species], lic.cow));
-      block.appendChild(statRow("Either sex", lic.either));
-      statCardBody.appendChild(block);
-    }
+    const anyLic = renderLicenseCard(speciesList, gmuCode);
     if (!anyLic)
       statCardBody.textContent = "No draw license data for this unit.";
     finishCard();
@@ -488,117 +496,8 @@ function showStatCard(gmuCode) {
 
   // Harvest by year for the selected season + sex, one card per species.
   for (const species of speciesList) {
-    const block = el("div", "stat-species-block");
-    block.appendChild(speciesBlockHeader(species, "Harvest · Success"));
-
-    let last = null;
-    let rowCount = 0;
-    for (const year of [...years].sort()) {
-      const raw = ((SPECIES_STATS.seasons?.[species]?.[season] || {})[year] ||
-        {})[gmuCode];
-      if (!raw) continue;
-      const male = raw.males ?? 0,
-        female = raw.females ?? 0;
-      if (
-        (sex === "males" && male === 0) ||
-        (sex === "females" && female === 0)
-      )
-        continue;
-      const shown =
-        sex === "males" ? male : sex === "females" ? female : raw.harvest;
-
-      const row = el("div", "stat-row");
-      const left = el("span", null, String(year));
-      if (String(year) === document.getElementById("yearSelect").value) {
-        left.textContent = `${year} ←`;
-        left.style.fontWeight = "700";
-      }
-      const right = el("span");
-      const arrow = pctArrow(last, shown);
-      if (arrow)
-        right.className = arrow.trim() === "▲" ? "trend-up" : "trend-down";
-      right.appendChild(document.createTextNode(`${shown}`));
-      if (arrow) right.appendChild(el("span", "trend-arrow", arrow.trim()));
-      if (sex === "any" && raw.success_pct != null) {
-        right.appendChild(document.createTextNode(` · ${raw.success_pct}%`));
-      }
-      row.append(left, right);
-      block.appendChild(row);
-
-      // Sex breakdown row beneath the year row.
-      if (sex === "any" && (raw.males != null || raw.females != null)) {
-        const terms = {
-          elk: ["bulls", "cows", "calves"],
-          deer: ["bucks", "does", "fawns"],
-          pronghorn: ["bucks", "does", "fawns"],
-          bear: ["boars", "sows", null],
-        };
-        const [mTerm, fTerm, yTerm] = terms[species] || [
-          "males",
-          "females",
-          "young",
-        ];
-        const bits = [];
-        if (raw.males) bits.push(`${raw.males} ${mTerm}`);
-        if (raw.females) bits.push(`${raw.females} ${fTerm}`);
-        if (yTerm && raw.young) bits.push(`${raw.young} ${yTerm}`);
-        block.appendChild(el("div", "stat-sexrow", bits.join(" · ")));
-      }
-      last = shown;
-      rowCount++;
-    }
-
-    // Per-season harvest breakdown for the selected year (only in "all seasons" view).
-    if (sex === "any") {
-      const seasonTables = SPECIES_STATS.seasons?.[species] || {};
-      const seasonDefs = [
-        ["rifle_1", "Rifle 1"],
-        ["rifle_2", "Rifle 2"],
-        ["rifle_3", "Rifle 3"],
-        ["rifle_4", "Rifle 4"],
-        ["rifle", "Rifle (all)"],
-        ["september", "September"],
-        ["archery", "Archery"],
-        ["muzzleloader", "Muzzleloader"],
-      ];
-      const seasonRows = [];
-      for (const [key, label] of seasonDefs) {
-        const row = ((seasonTables[key] || {})[
-          String(document.getElementById("yearSelect").value)
-        ] || {})[gmuCode];
-        if (!row || row.harvest == null) continue;
-        seasonRows.push({
-          label,
-          harvest: row.harvest,
-          success: row.success_pct,
-        });
-      }
-      if (seasonRows.length > 1) {
-        const sub = el("div", "stat-seasons");
-        sub.appendChild(
-          el(
-            "div",
-            "stat-seasons-head",
-            `By season (${document.getElementById("yearSelect").value})`,
-          ),
-        );
-        for (const s of seasonRows) {
-          sub.appendChild(el("div", "stat-season-row"));
-          const r = sub.lastChild;
-          r.append(
-            el("span", null, s.label),
-            el(
-              "span",
-              null,
-              `${s.harvest}${s.success != null ? ` · ${s.success}%` : ""}`,
-            ),
-          );
-        }
-        block.appendChild(sub);
-      }
-    }
-
-    if (!rowCount && !block.querySelector(".stat-seasons")) continue;
+    const block = renderHarvestCard(species, gmuCode, season, sex, years);
+    if (!block) continue;
     statCardBody.appendChild(block);
   }
   if (!statCardBody.childElementCount) {
@@ -608,17 +507,196 @@ function showStatCard(gmuCode) {
   finishCard();
 }
 
+// Draw-license block: one sub-block per species with bull/cow/either counts.
+function renderLicenseCard(speciesList, gmuCode) {
+  let anyLic = false;
+  for (const species of speciesList) {
+    const lic = (SPECIES_STATS.licenses?.[species] || {})[gmuCode];
+    if (!lic) continue;
+    anyLic = true;
+    const block = el("div", "stat-species-block");
+    block.appendChild(
+      speciesBlockHeader(species, `${SPECIES_STATS.license_year} draw`),
+    );
+    block.appendChild(statRow("Total", lic.bull + lic.cow + lic.either));
+    block.appendChild(statRow(SEX_M[species], lic.bull));
+    block.appendChild(statRow(SEX_F[species], lic.cow));
+    block.appendChild(statRow("Either sex", lic.either));
+    statCardBody.appendChild(block);
+  }
+  return anyLic;
+}
+
+// Harvest-by-year block for one species; returns null when nothing to show.
+function renderHarvestCard(species, gmuCode, season, sex, years) {
+  const block = el("div", "stat-species-block");
+  block.appendChild(speciesBlockHeader(species, "Harvest · Success"));
+
+  let last = null;
+  let rowCount = 0;
+  const selectedYear = String(document.getElementById("yearSelect").value);
+  for (const year of [...years].sort()) {
+    const raw = ((SPECIES_STATS.seasons?.[species]?.[season] || {})[year] ||
+      {})[gmuCode];
+    if (!raw) continue;
+    const male = raw.males ?? 0,
+      female = raw.females ?? 0;
+    if (
+      (sex === "males" && male === 0) ||
+      (sex === "females" && female === 0)
+    )
+      continue;
+    const shown =
+      sex === "males" ? male : sex === "females" ? female : raw.harvest;
+
+    const row = el("div", "stat-row");
+    const left = el("span", null, String(year));
+    if (String(year) === selectedYear) {
+      left.textContent = `${year} ←`;
+      left.style.fontWeight = "700";
+    }
+    const right = el("span");
+    const arrow = pctArrow(last, shown);
+    if (arrow)
+      right.className = arrow.trim() === "▲" ? "trend-up" : "trend-down";
+    right.appendChild(document.createTextNode(`${shown}`));
+    if (arrow) right.appendChild(el("span", "trend-arrow", arrow.trim()));
+    if (sex === "any" && raw.success_pct != null) {
+      right.appendChild(document.createTextNode(` · ${raw.success_pct}%`));
+    }
+    row.append(left, right);
+    block.appendChild(row);
+
+    // Sex breakdown row beneath the year row.
+    if (sex === "any" && (raw.males != null || raw.females != null)) {
+      const terms = {
+        elk: ["bulls", "cows", "calves"],
+        deer: ["bucks", "does", "fawns"],
+        pronghorn: ["bucks", "does", "fawns"],
+        bear: ["boars", "sows", null],
+      };
+      const [mTerm, fTerm, yTerm] = terms[species] || [
+        "males",
+        "females",
+        "young",
+      ];
+      const bits = [];
+      if (raw.males) bits.push(`${raw.males} ${mTerm}`);
+      if (raw.females) bits.push(`${raw.females} ${fTerm}`);
+      if (yTerm && raw.young) bits.push(`${raw.young} ${yTerm}`);
+      block.appendChild(el("div", "stat-sexrow", bits.join(" · ")));
+    }
+    last = shown;
+    rowCount++;
+  }
+
+  // Per-season harvest breakdown for the selected year (only in "all seasons" view).
+  if (sex === "any") renderSeasonBreakdown(species, gmuCode, selectedYear, block);
+
+  if (!rowCount && !block.querySelector(".stat-seasons")) return null;
+  return block;
+}
+
+// "By season" sub-table for the selected year, appended to a harvest block.
+function renderSeasonBreakdown(species, gmuCode, selectedYear, block) {
+  const seasonTables = SPECIES_STATS.seasons?.[species] || {};
+  const seasonDefs = [
+    ["rifle_1", "Rifle 1"],
+    ["rifle_2", "Rifle 2"],
+    ["rifle_3", "Rifle 3"],
+    ["rifle_4", "Rifle 4"],
+    ["rifle", "Rifle (all)"],
+    ["september", "September"],
+    ["archery", "Archery"],
+    ["muzzleloader", "Muzzleloader"],
+  ];
+  const seasonRows = [];
+  for (const [key, label] of seasonDefs) {
+    const row = ((seasonTables[key] || {})[selectedYear] || {})[gmuCode];
+    if (!row || row.harvest == null) continue;
+    seasonRows.push({
+      label,
+      harvest: row.harvest,
+      success: row.success_pct,
+    });
+  }
+  if (seasonRows.length <= 1) return;
+  const sub = el("div", "stat-seasons");
+  sub.appendChild(el("div", "stat-seasons-head", `By season (${selectedYear})`));
+  for (const s of seasonRows) {
+    const r = el("div", "stat-season-row");
+    r.append(
+      el("span", null, s.label),
+      el(
+        "span",
+        null,
+        `${s.harvest}${s.success != null ? ` · ${s.success}%` : ""}`,
+      ),
+    );
+    sub.appendChild(r);
+  }
+  block.appendChild(sub);
+}
+
+// Build a short shareable message: "check this GMU out" + a deep link to
+// the map with that unit pre-selected.
+function buildShareText(gmuCode) {
+  const url = `${window.location.origin}${window.location.pathname}?gmu=${encodeURIComponent(gmuCode)}`;
+  return `Check out GMU ${gmuCode}! 🗺️\n${url}`;
+}
+
 // Re-render the card when pickers change; remember the last GMU clicked.
 let lastGmu = null;
-const _origShow = showStatCard;
-showStatCard = (gmu) => {
+function showStatCard(gmu) {
   lastGmu = gmu;
-  _origShow(gmu);
-};
+  try {
+    localStorage.setItem("rmc_last_gmu_v1", JSON.stringify(gmu));
+  } catch {
+    /* storage unavailable — the sidebar just won't show the shared unit */
+  }
+  renderStatCard(gmu);
+}
 for (const id of ["speciesSelect", "seasonSelect", "sexSelect", "yearSelect"]) {
   document.getElementById(id).addEventListener("change", () => {
-    if (!statCard.hidden && lastGmu) showStatCard(lastGmu);
+    if (statCard && !statCard.hidden && lastGmu) showStatCard(lastGmu);
   });
+}
+
+// "Share to group chat" dropdown: POST the current unit's summary to the
+// chosen chat as a regular message (same CSRF-protected path as the chat form).
+const statShareBtn = document.getElementById("statShareChat");
+if (statShareBtn) {
+  statShareBtn.parentElement
+    .querySelectorAll(".dropdown-item[data-chat-url]")
+    .forEach((item) => {
+      item.addEventListener("click", async () => {
+        if (!lastGmu || statShareBtn.disabled) return;
+        const text = buildShareText(lastGmu);
+        if (!text) return;
+        const csrf = document.querySelector("input[name=csrfmiddlewaretoken]");
+        const token = csrf?.value || document.cookie.split(";").map(c => c.trim())
+          .find(c => c.startsWith("csrftoken="))?.split("=")[1];
+        if (!token) return; // no token available — bail rather than fail the POST
+        try {
+          const resp = await fetch(item.dataset.chatUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRFToken": token,
+            },
+            body: new URLSearchParams({ text }),
+          });
+          if (resp.ok) {
+            window.location.href = item.dataset.chatUrl;
+          } else {
+            alert("Couldn't share to chat (HTTP " + resp.status + "). Try again.");
+          }
+        } catch (err) {
+          alert("Couldn't reach the chat: " + err.message);
+        }
+      });
+    });
 }
 
 initMap();

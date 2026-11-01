@@ -134,6 +134,20 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 
+# Auth redirects
+# After logging out, show the friendly "see you next time" page.
+LOGOUT_REDIRECT_URL = 'logged_out'
+# After logging in, send users to the group chat.
+LOGIN_REDIRECT_URL = 'group_chat'
+# Where @login_required sends unauthenticated visitors.
+LOGIN_URL = 'login'
+
+
+# User-uploaded files (profile photos, etc.)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 

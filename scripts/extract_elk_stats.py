@@ -15,77 +15,13 @@ Download the PDFs from:
 """
 
 import json
-import re
 import sys
 from pathlib import Path
 
-import pdfplumber
+from cpw_parse import parse_bear, parse_eight_col, parse_licenses
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT = BASE_DIR / "static" / "hunting" / "elk_stats.json"
-
-BEAR_RE = re.compile(r"^(\d{3})\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$")
-
-
-def parse_eight_col(pdf_path: str) -> dict:
-    """Parse 'for All Manners of Take' tables -> {gmu: {harvest, hunters, success_pct}}."""
-    stats = {}
-    row_re = re.compile(
-        r"^(\d{3})\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)\s+(\d+)\s+([\d,]+)$"
-    )
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text() or ""
-            if "for All Manners of Take" not in text:
-                continue
-            for line in text.splitlines():
-                m = row_re.match(line.strip())
-                if m:
-                    unit, _a, _b, _c, total, hunters, pct, _days = m.groups()
-                    stats[unit] = {
-                        "harvest": int(total.replace(",", "")),
-                        "hunters": int(hunters.replace(",", "")),
-                        "success_pct": int(pct),
-                    }
-    return stats
-
-
-def parse_bear(pdf_path: str) -> dict:
-    """Bear tables only publish unit boars sows harvest days (no hunters/success)."""
-    stats = {}
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text() or ""
-            if "for All Manners of Take" not in text:
-                continue
-            for line in text.splitlines():
-                m = BEAR_RE.match(line.strip())
-                if m:
-                    stats[m.group(1)] = {
-                        "harvest": int(m.group(4)),
-                        "rec_days": int(m.group(5)),
-                    }
-    return stats
-
-
-def parse_licenses(pdf_path: str) -> dict:
-    """Parse draw recap -> {gmu: total_quota} summed across the unit's hunt codes."""
-    quotas = {}
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text() or ""
-            code = re.search(r"\bE[A-Z](\d{3})[A-Z0-9]+\b", text)
-            if not code:
-                continue
-            gmu = code.group(1)
-            q = re.search(
-                r"^(\d+)\s+LPP Restricted \(up to\).*?(\d+)\s+(\d+)\s+Determined",
-                text,
-                re.M,
-            )
-            if q:
-                quotas[gmu] = quotas.get(gmu, 0) + int(q.group(2))
-    return quotas
 
 
 def main() -> None:
@@ -96,7 +32,7 @@ def main() -> None:
     recap_path = sys.argv[5] if len(sys.argv) > 5 else None
 
     harvest = parse_eight_col(harvest_path)
-    licenses = parse_licenses(recap_path)
+    licenses = parse_licenses(recap_path) if recap_path else {}
     print(f"harvest units: {len(harvest)}, license units: {len(licenses)}")
 
     # --- Extra species: deer, bear, pronghorn (2023 harvest estimates) ---

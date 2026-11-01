@@ -8,6 +8,7 @@
 {% endblock extra_css %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container my-4">
   <div id="app">
   <aside id="sidebar">
@@ -112,7 +113,45 @@
   <div class="stat-panel" id="statCard" hidden>
     <div class="stat-panel-header">
       <strong id="statCardTitle">GMU stats</strong>
-      <button type="button" id="statCardClose" aria-label="Close">×</button>
+      <div class="d-flex align-items-center gap-2">
+        {% if user.is_authenticated %}
+          <div class="dropdown">
+            <button type="button" id="statShareChat"
+                    class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    disabled
+                    title="Share this unit and its stats with your group">
+              💬 Share to group chat
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="statShareChat">
+              <li>
+                <button type="button" class="dropdown-item"
+                        data-chat-url="{% url 'group_chat' %}">General chat</button>
+              </li>
+              {% if chat_groups %}
+                {% for group in chat_groups %}
+                  <li>
+                    <button type="button" class="dropdown-item"
+                            data-chat-url="{% url 'group_chat_group' group.pk %}">{{ group.name }}</button>
+                  </li>
+                {% endfor %}
+              {% else %}
+                <li>
+                  <a class="dropdown-item text-muted"
+                     href="{% url 'group_create' %}">+ Create a group</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
+        {% else %}
+          <a class="btn btn-sm btn-outline-secondary"
+             href="{% url 'login' %}?next={% url 'maps' %}">
+            🔒 Log in to share
+          </a>
+        {% endif %}
+        <button type="button" id="statCardClose" aria-label="Close">×</button>
+      </div>
     </div>
     <div class="stat-tabs" id="statTabs" hidden></div>
     <div id="statCardBody" class="stat-panel-grid"></div>
@@ -123,6 +162,7 @@
 
 {% block js %}
 <script src="{% static 'js/cpw-config.js' %}"></script>
-<script src="{% static 'js/maps.js' %}"></script>
+<!-- ?v=mtime cache-buster: browsers pick up edits without a hard refresh -->
+<script src="{% static 'js/maps.js' %}?v={{ maps_js_mtime }}"></script>
 {% endblock js %}
 

@@ -116,7 +116,14 @@ body {
   border: 1px solid #dce5da;
   border-radius: 18px;
   box-shadow: 0 12px 38px rgba(31, 52, 34, 0.09);
-  overflow: hidden;
+  overflow: visible; /* was hidden — it clipped the share dropdown */
+}
+/* Keep the rounded corners now that overflow isn't clipping children: */
+.stat-panel-header {
+  border-radius: 17px 17px 0 0;
+}
+.stat-panel .stat-note {
+  border-radius: 0 0 17px 17px;
 }
 .stat-panel-header {
   display: flex;

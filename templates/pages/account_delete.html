@@ -1,0 +1,43 @@
+{% extends "base.html" %} {% block title %}Delete Account — Rocky Mountain
+Coalition{% endblock title %} {% block content %}
+<section class="container my-5" style="max-width: 560px">
+  <h1 class="section-heading text-danger">Delete Account</h1>
+
+  <div class="alert alert-danger">
+    <strong>This is permanent.</strong> Deleting your account removes:
+    <ul class="mb-0 mt-2">
+      <li>Your hunter profile (name, city, state, photo)</li>
+      <li>{{ message_count }} chat message{{ message_count|pluralize }}</li>
+      <li>
+        Your membership in {{ group_count }} group{{ group_count|pluralize }}
+      </li>
+    </ul>
+  </div>
+
+  <form method="post" class="mt-4">
+    {% csrf_token %} {% if form_error %}
+    <div class="alert alert-warning">{{ form_error }}</div>
+    {% endif %}
+    <div class="mb-3">
+      <label class="form-label" for="password">Confirm your password</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        class="form-control"
+        required
+        autocomplete="current-password"
+      />
+      <div class="form-text">
+        Enter your password to confirm account deletion.
+      </div>
+    </div>
+    <button type="submit" class="btn btn-danger mt-2">
+      Delete my account forever
+    </button>
+    <a href="{% url 'profile' %}" class="btn btn-outline-secondary mt-2"
+      >Cancel</a
+    >
+  </form>
+</section>
+{% endblock content %}

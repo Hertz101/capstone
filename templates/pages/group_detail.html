@@ -1,0 +1,86 @@
+{% extends "base.html" %} {% block title %}{{ group.name }} — Members{% endblock
+title %} {% block content %}
+<section class="container my-5" style="max-width: 640px">
+  <h1 class="section-heading">{{ group.name }}</h1>
+  <p class="text-muted">
+    {% if is_creator %}You created this group — you can add or remove members
+    below.{% else %}{{ group.members.count }} member{{
+    group.members.count|pluralize }}{% endif %}
+  </p>
+
+  <div class="list-group mb-4">
+    {% for member in group.members.all %}
+    <div
+      class="list-group-item d-flex justify-content-between align-items-center"
+    >
+      <div class="d-flex align-items-center gap-2">
+        {% if member.profile.photo %}
+        <img
+          src="{{ member.profile.photo.url }}"
+          alt="{{ member.profile.display_name }}"
+          class="rounded-circle"
+          style="width: 32px; height: 32px; object-fit: cover"
+        />
+        {% else %}
+        <span
+          class="badge rounded-pill bg-secondary"
+          style="
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+          "
+          >{{ member.get_username|first|upper }}</span
+        >
+        {% endif %}
+        <strong
+          >{{ member.profile.display_name|default:member.get_username }}</strong
+        >
+        {% if member == group.created_by %}<span class="badge bg-primary"
+          >Creator</span
+        >{% endif %}
+      </div>
+      {% if is_creator and member != request.user %}
+      <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="remove" />
+        <input type="hidden" name="user_id" value="{{ member.pk }}" />
+        <button type="submit" class="btn btn-sm btn-outline-danger">
+          Remove
+        </button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if is_creator and non_members %}
+  <h2 class="h5 mb-3">Add users</h2>
+  {% for u in non_members %}
+  <form
+    method="post"
+    class="d-flex justify-content-between align-items-center border rounded p-2 mb-2"
+  >
+    {% csrf_token %}
+    <span>{{ u.profile.display_name|default:u.get_username }}</span>
+    <div>
+      <input type="hidden" name="action" value="add" />
+      <input type="hidden" name="user_id" value="{{ u.pk }}" />
+      <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
+    </div>
+  </form>
+  {% endfor %} {% elif is_creator %}
+  <p class="text-muted">Everyone is already in this group.</p>
+  {% endif %}
+
+  <div class="mt-4 d-flex gap-2">
+    <a href="{% url 'group_chat_group' group.pk %}" class="btn btn-primary"
+      >Open chat</a
+    >
+    <a href="{% url 'group_list' %}" class="btn btn-outline-secondary"
+      >All groups</a
+    >
+  </div>
+</section>
+{% endblock content %}

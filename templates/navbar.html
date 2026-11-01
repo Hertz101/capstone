@@ -67,24 +67,26 @@
                                 Resources
                             </a>
                         </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'group_chat' %}">
-                                Group Chat
-                            </a>
-                        </li>
                     </ul>
                 </li>
 
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'group_chat' %}">
+                            Group Chat
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'your_trip' %}">
                             Your Trip
                         </a>
                     </li>
+                {% endif %}
                 </ul>
 
             <!-- Search -->
             <form
-                class="d-flex gap-2"
+                class="d-flex gap-2 me-3"
                 role="search"
                 action="{% url 'home' %}"
                 method="get"
@@ -100,6 +102,32 @@
                     Search
                 </button>
             </form>
+
+            <!-- Account: login link, or the user's name + logout -->
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'profile' %}">
+                            Hi, {% firstof user.profile.display_name user.get_username %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" class="d-flex">
+                            {% csrf_token %}
+                            <button class="btn btn-link nav-link" type="submit">
+                                Log out
+                            </button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Log in</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'signup' %}">Sign up</a>
+                    </li>
+                {% endif %}
+            </ul>
         </div>
 
     </div>

@@ -1,0 +1,16 @@
+{% extends "base.html" %} {% block title %}Logged Out — Rocky Mountain
+Coalition{% endblock title %} {% block content %}
+<section class="container my-5 text-center" style="max-width: 560px">
+  <h1 class="section-heading">See you next time!</h1>
+  <p class="lead">
+    You're logged out. Your gear list is packed and the season will be waiting
+    when you get back.
+  </p>
+  <div class="d-flex justify-content-center gap-2 mt-4">
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary"
+      >Back to home</a
+    >
+    <a href="{% url 'login' %}" class="btn btn-primary">Log back in</a>
+  </div>
+</section>
+{% endblock content %}

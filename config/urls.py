@@ -15,10 +15,28 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.contrib.auth import views as auth_views
+from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
+
+from pages import views as pages_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("pages.urls")),
     path("hunting/", include("hunting.urls")),
+    path("accounts/", include("django.contrib.auth.urls")),
+    # Override the built-in logout so it lands on the farewell page.
+    path(
+        "accounts/logout/",
+        auth_views.LogoutView.as_view(next_page="logged_out"),
+        name="logout",
+    ),
+    path("logged-out/", pages_views.logged_out_view, name="logged_out"),
+    path("accounts/signup/", pages_views.signup_view, name="signup"),
 ]
+
+# Serve user-uploaded media in development only.
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

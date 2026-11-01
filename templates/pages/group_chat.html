@@ -1,13 +1,261 @@
-{% extends "base.html" %}
-
-{% block title %}Group Chat — Rocky Mountain Coalition{% endblock title %}
-
-{% block content %}
+{% extends "base.html" %} {% load static %} {% block title %}Group Chat — Rocky
+Mountain Coalition{% endblock title %} {% block content %}
 <section class="container my-5">
-  <h1 class="section-heading">Group Chat</h1>
+  <div class="d-flex justify-content-between align-items-center">
+    <h1 class="section-heading">
+      {% if chat_group %}{{ chat_group.name }}{% else %}Group Chat{% endif %}
+    </h1>
+    <div class="d-flex gap-2">
+      <a href="{% url 'group_list' %}" class="btn btn-outline-secondary"
+        >My groups</a
+      >
+      <a href="{% url 'group_create' %}" class="btn btn-primary">+ New group</a>
+    </div>
+  </div>
   <p class="lead">
     Coordinate with your friends and family for the upcoming season.
-    Messaging is coming soon — for now this page is a placeholder.
   </p>
+
+  <div class="chat-layout">
+    <!-- Left sidebar: your hunt plan, packing list, and selected GMU.
+         Each card is its own self-contained form — no shared state, so
+         sharing can't be broken by markup nesting or script timing. -->
+    <aside class="chat-sidebar" id="chatSidebar">
+      <div
+        class="chat-tool-card"
+        id="planCard"
+        data-planner-url="{% url 'planner' %}"
+      >
+        <div class="chat-tool-header">
+          <h3>🎯 My Hunt Plan</h3>
+        </div>
+        <dl class="chat-tool-fields">
+          <div>
+            <dt>Species</dt>
+            <dd id="planSpecies">—</dd>
+          </div>
+          <div>
+            <dt>Season</dt>
+            <dd id="planSeason">—</dd>
+          </div>
+          <div>
+            <dt>Method</dt>
+            <dd id="planMethod">—</dd>
+          </div>
+          <div>
+            <dt>Unit</dt>
+            <dd id="planGmu">—</dd>
+          </div>
+          <div>
+            <dt>License</dt>
+            <dd id="planLicense">—</dd>
+          </div>
+        </dl>
+        <p class="chat-tool-empty" id="planEmpty">
+          No plan yet —
+          <a href="{% url 'planner' %}">build one in the Hunt Planner</a>.
+        </p>
+        <form method="post" class="share-form" data-kind="plan">
+          {% csrf_token %}
+          <input type="hidden" name="kind" value="plan" />
+          <input type="hidden" name="payload" value="" />
+          <input type="hidden" name="text" value="🎯 shared My Hunt Plan" />
+          <button
+            type="submit"
+            class="btn btn-sm btn-outline-secondary w-100"
+            data-share="plan"
+            disabled
+          >
+            Share my plan
+          </button>
+        </form>
+      </div>
+
+      <div class="chat-tool-card" id="packingCard">
+        <div class="chat-tool-header">
+          <h3>🎒 My Packing List</h3>
+        </div>
+        <p class="chat-tool-empty" id="packingEmpty">
+          Nothing checked yet — tick items on the Your Trip page.
+        </p>
+        <ul class="chat-tool-list" id="packingList" hidden></ul>
+        <form method="post" class="share-form" data-kind="packing">
+          {% csrf_token %}
+          <input type="hidden" name="kind" value="packing" />
+          <input type="hidden" name="payload" value="" />
+          <input type="hidden" name="text" value="🎒 shared My Packing List" />
+          <button
+            type="submit"
+            class="btn btn-sm btn-outline-secondary w-100"
+            data-share="packing"
+            disabled
+          >
+            Share my list
+          </button>
+        </form>
+      </div>
+
+      <div class="chat-tool-card" id="gmuCard">
+        <div class="chat-tool-header">
+          <h3>🗺️ Selected GMU</h3>
+        </div>
+        <dl class="chat-tool-fields">
+          <div>
+            <dt>Unit</dt>
+            <dd id="gmuCode">—</dd>
+          </div>
+        </dl>
+        <p class="chat-tool-empty" id="gmuEmpty">
+          None picked — <a href="{% url 'maps' %}">open the Hunting Map</a> and
+          click a unit.
+        </p>
+        <p class="chat-tool-note" hidden id="gmuNote">
+          <a href="{% url 'maps' %}">View this unit on the map</a>
+        </p>
+        <form method="post" class="share-form" data-kind="gmu">
+          {% csrf_token %}
+          <input type="hidden" name="kind" value="gmu" />
+          <input type="hidden" name="payload" value="" />
+          <input type="hidden" name="text" value="🗺️ shared Selected GMU" />
+          <button
+            type="submit"
+            class="btn btn-sm btn-outline-secondary w-100"
+            data-share="gmu"
+            disabled
+          >
+            Share my GMU
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Chat column -->
+    <div class="chat-main">
+      {% if chat_messages %}
+      <div class="list-group mb-4" id="chatMessages">
+        {% for message in chat_messages %}
+        <div
+          class="list-group-item{% if message.kind == 'plan' %} chat-card chat-card-plan{% elif message.kind == 'packing' %} chat-card chat-card-packing{% elif message.kind == 'gmu' %} chat-card chat-card-gmu{% endif %}"
+        >
+          <div class="d-flex w-100 justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              {% with profile=message.user.profile %} {% if profile and
+              profile.photo %}
+              <img
+                src="{{ profile.photo.url }}"
+                alt="{{ profile.display_name }}"
+                class="rounded-circle"
+                style="width: 32px; height: 32px; object-fit: cover"
+              />
+              {% else %}
+              <span
+                class="badge rounded-pill bg-secondary"
+                style="
+                  width: 32px;
+                  height: 32px;
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+                >{{ message.user.get_username|first|upper }}</span
+              >
+              {% endif %}
+              <strong
+                >{{ profile.display_name|default:message.user.get_username
+                }}</strong
+              >
+              {% endwith %}
+            </div>
+            <small class="text-muted"
+              >{{ message.created_at|date:"M j, Y g:i A" }}</small
+            >
+          </div>
+          <p class="mb-0">{{ message.text }}</p>
+          {% if message.kind == 'plan' and message.payload %}
+          <div class="chat-share-card mt-2">
+            <h4>🎯 Hunt Plan</h4>
+            <table class="table table-sm mb-0">
+              <tr>
+                <th>Species</th>
+                <td>{{ message.payload.species|default_if_none:'—' }}</td>
+              </tr>
+              <tr>
+                <th>Season</th>
+                <td>{{ message.payload.season|default_if_none:'—' }}</td>
+              </tr>
+              <tr>
+                <th>Method</th>
+                <td>{{ message.payload.method|default_if_none:'—' }}</td>
+              </tr>
+              <tr>
+                <th>Unit</th>
+                <td>
+                  {% if message.payload.gmu %}<a
+                    href="{% url 'maps' %}?gmu={{ message.payload.gmu }}"
+                    >GMU {{ message.payload.gmu }}</a
+                  >{% else %}—{% endif %}
+                </td>
+              </tr>
+              <tr>
+                <th>License</th>
+                <td>{{ message.payload.license|default_if_none:'—' }}</td>
+              </tr>
+            </table>
+          </div>
+          {% elif message.kind == 'packing' and message.payload %}
+          <div class="chat-share-card mt-2">
+            <h4>🎒 Packing List</h4>
+            <ul class="mb-0">
+              {% for item in message.payload.items %}
+              <li>✔️ {{ item }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% elif message.kind == 'gmu' and message.payload %}
+          <div class="chat-share-card mt-2">
+            <h4>🗺️ Selected GMU</h4>
+            <p class="mb-0">
+              Unit
+              <a href="{% url 'maps' %}?gmu={{ message.payload.gmu }}"
+                >GMU {{ message.payload.gmu }}</a
+              >
+              — check the stats card on the Hunting Map for harvest info.
+            </p>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="alert alert-info">
+        No messages yet — be the first to post!
+      </div>
+      {% endif %}
+
+      <form method="post" id="chatForm" class="d-flex gap-2 mt-2" novalidate>
+        {% csrf_token %}
+        <input
+          type="text"
+          name="text"
+          class="form-control"
+          maxlength="2000"
+          placeholder="Post a message…"
+          aria-label="Message"
+        />
+        <button type="submit" class="btn btn-primary" name="kind" value="text">
+          Post
+        </button>
+      </form>
+      {% if chat_group %}
+      <a href="{% url 'group_detail' chat_group.pk %}" class="btn btn-link mt-3"
+        >Group members →</a
+      >
+      {% endif %}
+    </div>
+  </div>
 </section>
-{% endblock content %}
+{% endblock content %} {% block extra_css %} {{ block.super }}
+<link rel="stylesheet" href="{% static 'css/group_chat.css' %}" />
+{% endblock extra_css %} {% block js %} {{ block.super }}
+<script src="{% static 'js/chat_sidebar.js' %}?v={{ chat_sidebar_mtime }}"></script>
+{% endblock js %}

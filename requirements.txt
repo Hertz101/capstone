@@ -1,1 +1,4 @@
-python-dotenv
+python-dotenvDjango
+pdfplumber
+pytest
+pytest-django
