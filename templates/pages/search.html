@@ -1,7 +1,5 @@
-{% extends "base.html" %}
-{% load static %}
-{% block title %}Search — Rocky Mountain Coalition{% endblock title %}
-{% block content %}
+{% extends "base.html" %} {% load static %} {% block title %}Search — Rocky
+Mountain Coalition{% endblock title %} {% block content %}
 <section class="container my-5" style="max-width: 760px">
   <h1 class="section-heading">Search</h1>
 
@@ -11,37 +9,49 @@
   </p>
   {% else %}
   <p class="lead">Type a search term in the bar above.</p>
-  {% endif %}
-
-  {% if results.groups %}
+  {% endif %} {% if results.groups %}
   <h2 class="h5 mt-4">Groups</h2>
   <div class="list-group mb-3">
     {% for group in results.groups %}
-    <a href="{% url 'group_chat_group' group.pk %}" class="list-group-item list-group-item-action">
+    <a
+      href="{% url 'group_chat_group' group.pk %}"
+      class="list-group-item list-group-item-action"
+    >
       <strong>{{ group.name }}</strong>
-      <small class="text-muted d-block">{{ group.members.count }} member{{ group.members.count|pluralize }}</small>
+      <small class="text-muted d-block"
+        >{{ group.members.count }} member{{ group.members.count|pluralize
+        }}</small
+      >
     </a>
     {% endfor %}
   </div>
-  {% endif %}
-
-  {% if results.messages %}
+  {% endif %} {% if results.messages %}
   <h2 class="h5 mt-4">Messages</h2>
   <div class="list-group mb-3">
     {% for message in results.messages %}
     <a
-      {% if message.group %}href="{% url 'group_chat_group' message.group.pk %}"{% else %}href="{% url 'group_chat' %}"{% endif %}
+      {%
+      if
+      message.group
+      %}href="{% url 'group_chat_group' message.group.pk %}"
+      {%
+      else
+      %}href="{% url 'group_chat' %}"
+      {%
+      endif
+      %}
       class="list-group-item list-group-item-action"
     >
       <strong>{{ message.user.get_username }}</strong>
-      <small class="text-muted">· {{ message.created_at|date:"M j, Y g:i A" }}{% if message.group %} · in {{ message.group.name }}{% endif %}</small>
+      <small class="text-muted"
+        >· {{ message.created_at|date:"M j, Y g:i A" }}{% if message.group %} ·
+        in {{ message.group.name }}{% endif %}</small
+      >
       <div>{{ message.text|truncatewords:25 }}</div>
     </a>
     {% endfor %}
   </div>
-  {% endif %}
-
-  {% if results.resources %}
+  {% endif %} {% if results.resources %}
   <h2 class="h5 mt-4">Resources</h2>
   <div class="list-group mb-3">
     {% for card in results.resources %}
@@ -51,18 +61,16 @@
     </div>
     {% endfor %}
   </div>
-  {% endif %}
-
-  {% if results.pages %}
+  {% endif %} {% if results.pages %}
   <h2 class="h5 mt-4">Pages</h2>
   <div class="list-group mb-3">
     {% for label, url_name in results.pages %}
-    <a href="{% url url_name %}" class="list-group-item list-group-item-action">{{ label }}</a>
+    <a href="{% url url_name %}" class="list-group-item list-group-item-action"
+      >{{ label }}</a
+    >
     {% endfor %}
   </div>
-  {% endif %}
-
-  {% if query and result_count == 0 %}
+  {% endif %} {% if query and result_count == 0 %}
   <div class="alert alert-info mt-4">No results. Try a different term.</div>
   {% endif %}
 </section>

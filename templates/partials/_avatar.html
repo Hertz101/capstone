@@ -1,6 +1,5 @@
-{# Avatar with photo-or-initials fallback. Params: user, size (px, default 32). #}
-{% with size_px=size|default:32 %}
-{% if user.profile.photo %}
+{# Avatar with photo-or-initials fallback. Params: user, size (px, default 32).
+#} {% with size_px=size|default:32 %} {% if user.profile.photo %}
 <img
   src="{{ user.profile.photo.url }}"
   alt="{{ user.profile.display_name }}"
@@ -11,6 +10,6 @@
 <span
   class="badge rounded-pill bg-secondary"
   style="width: {{ size_px }}px; height: {{ size_px }}px; display: inline-flex; align-items: center; justify-content: center;{% if size_px >= 96 %} font-size: 2.5rem;{% endif %}"
->{{ user.get_username|first|upper }}</span>
-{% endif %}
-{% endwith %}
+  >{{ user.get_username|first|upper }}</span
+>
+{% endif %} {% endwith %}
