@@ -1,4 +1,9 @@
-python-dotenvDjango
+Django
+python-dotenv
 pdfplumber
 pytest
 pytest-django
+Pillow
+gunicorn
+whitenoise
+django-ratelimit

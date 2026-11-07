@@ -34,10 +34,14 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Set DJANGO_DEBUG=false (or anything other than "true") in production.
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
+# Defaults to False for safety: you must OPT IN to debug mode locally by
+# setting DJANGO_DEBUG=true (your .env). Production must never set it.
+DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split() or []
+# Render sets this: your app's public hostname(s), space-separated.
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split() or [
+    "127.0.0.1", "localhost", "testserver"
+]
 
 
 # Application definition
@@ -57,6 +61,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise serves collected static files in production (Render):
+    # gzip-compressed, cache-fingerprinted, no extra server needed.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -120,7 +127,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Colorado time — messages, profile dates, and admin timestamps display in
+# Mountain Time. USE_TZ keeps the DB in UTC internally; Django converts on
+# display, handling MST/MDT automatically.
+TIME_ZONE = 'America/Denver'
 
 USE_I18N = True
 
@@ -132,6 +142,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
+# collectstatic target for production deploys (Render runs it at build time).
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Compress and fingerprint static files when DEBUG is off (WhiteNoise).
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {
+        # Manifest storage fingerprint URLs; missing .map sourcemaps are common
+        # in vendored bundles, so fall back to plain compressed storage.
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
 
 
 # Auth redirects
@@ -153,6 +175,26 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 MAILERS = {
     'default': {
+        # Gmail SMTP. Credentials live ONLY in .env (EMAIL_HOST_USER /
+        # EMAIL_HOST_PASSWORD / DEFAULT_FROM_EMAIL). Gmail requires an App
+        # Password on a 2FA account: https://myaccount.google.com/apppasswords
+        'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+        'OPTIONS': {
+            'host': os.environ.get('EMAIL_HOST', 'smtp.gmail.com'),
+            'port': int(os.environ.get('EMAIL_PORT', '587')),
+            'username': os.environ.get('EMAIL_HOST_USER', ''),
+            # Spaces are stripped because Google shows app passwords as
+            # "abcd efgh ijkl mnop" and the SMTP server wants it without.
+            'password': os.environ.get('EMAIL_HOST_PASSWORD', '').replace(' ', ''),
+            'use_tls': True,
+        },
+    },
+    # Fallback used when no Gmail credentials are set: prints emails to the
+    # runserver console so the notification flow still works offline.
+    'console': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL') or \
+    os.environ.get('EMAIL_HOST_USER') or 'webmaster@localhost'

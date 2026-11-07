@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:0; padding:0; background-color:#f2f5f1;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f2f5f1; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+              style="max-width:520px; background:#ffffff; border-radius:12px; border:1px solid #dce5da; box-shadow:0 4px 14px rgba(31,52,34,0.08); font-family:Arial, Helvetica, sans-serif;">
+          <!-- Header band -->
+          <tr>
+            <td style="background:#24452e; border-radius:12px 12px 0 0; padding:18px 24px;">
+              <span style="color:#ffffff; font-size:18px; font-weight:bold;">
+                ⛰️ Rocky Mountain Coalition
+              </span><br/>
+              <span style="color:#d8a75a; font-size:13px;">Group chat update</span>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:24px;">
+              <p style="margin:0 0 14px; color:#26332a; font-size:16px;">
+                <strong style="color:#24452e;">{{ actor_name }}</strong>
+                {{ action }} in
+                <strong style="color:#24452e;">{{ group_name }}</strong>.
+              </p>
+              <!-- Message block styled to echo the chat's own message cards -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                    style="border:1px solid #dce5da; border-radius:10px; margin:0 0 18px;">
+                <tr>
+                  <td style="padding:12px 16px 0 16px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="vertical-align:middle; padding-right:8px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="background:#6b776d; border-radius:999px; width:32px; height:32px; text-align:center; vertical-align:middle;">
+                                <span style="color:#ffffff; font-size:15px; font-weight:bold;">{{ actor_name|first|upper }}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td style="vertical-align:middle; color:#26332a; font-size:14px; font-weight:bold;">
+                          {{ actor_name }}
+                          <span style="color:#6b776d; font-size:12px; font-weight:normal;">· {{ posted_time }}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 16px 14px 16px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                          style="background:#edf3e9; border-radius:8px;">
+                      <tr>
+                        <td style="padding:12px 16px; color:#26332a; font-size:14px; line-height:1.5;">
+                          {% for line in body_lines %}{{ line|linebreaksbr }}{% if not forloop.last %}<br/>{% endif %}{% endfor %}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              {% if request_url %}
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background:#1d6fd8; border-radius:999px;">
+                    <a href="{{ request_url }}"
+                      style="display:inline-block; padding:10px 22px; color:#ffffff; font-size:14px; font-weight:bold; text-decoration:none;">
+                      Open the chat →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              {% endif %}
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:14px 24px; border-top:1px solid #dce5da;">
+              <span style="color:#6b776d; font-size:12px;">
+                You're receiving this because you're a member of
+                <strong>{{ group_name }}</strong> on Rocky Mountain Coalition.
+              </span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

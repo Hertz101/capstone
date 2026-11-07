@@ -161,9 +161,46 @@
   text-decoration: none;
 }
 
-.resource-link:hover {
-  color: var(--hunt-green-dark, #172f20);
-  text-decoration: underline;
+/* Button-styled resource links: theme-primary / btn-solid / btn-styled */
+.resource-link.theme-primary {
+  --btn-theme: var(--hunt-green, #24452e);
+}
+
+.resource-link.btn-solid {
+  display: inline-block;
+  margin: 0.25rem 0.5rem 0.25rem 0;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  background: var(--btn-theme, var(--hunt-green, #24452e));
+  color: #fff;
+  text-decoration: none;
+}
+
+.resource-link.btn-solid:hover {
+  background: var(--hunt-green-dark, #172f20);
+  color: #fff;
+  text-decoration: none;
+}
+
+.resource-link.btn-styled {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 14px rgba(31, 52, 34, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.resource-link.btn-styled:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(31, 52, 34, 0.24);
+}
+
+.resource-link.btn-styled:active {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resource-link.btn-styled { transition: none; }
+  .resource-link.btn-styled:hover { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

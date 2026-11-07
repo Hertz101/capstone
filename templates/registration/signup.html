@@ -50,6 +50,12 @@
       {{ form.username.errors }}
     </div>
     <div class="mt-3">
+      <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+      {{ form.email }}
+      {{ form.email.errors }}
+      {% if form.email.help_text %}<div class="form-text">{{ form.email.help_text }}</div>{% endif %}
+    </div>
+    <div class="mt-3">
       <label class="form-label" for="{{ form.password1.id_for_label }}">Password</label>
       {{ form.password1 }}
       {{ form.password1.errors }}

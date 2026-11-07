@@ -23,11 +23,20 @@ class Message(models.Model):
     kind = models.CharField(
         max_length=20,
         choices=[("text", "Text"), ("plan", "Hunt plan"),
-                 ("packing", "Packing list"), ("gmu", "Selected GMU")],
+                 ("packing", "Packing list"), ("gmu", "Selected GMU"),
+                 ("system", "System announcement")],
         default="text",
     )
     payload = models.JSONField(null=True, blank=True)
+    liked_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="liked_messages",
+        blank=True,
+    )
+    edited = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Set on every save — when non-null it backs the "(edited)" marker.
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]

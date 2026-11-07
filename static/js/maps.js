@@ -98,18 +98,79 @@ async function loadLayer(key) {
         const box = el("div");
         box.appendChild(el("strong", null, title));
 
-        Object.entries(props)
-          .slice(0, 12)
-          .forEach(([key, value]) => {
-            box.appendChild(el("div", null, `${key}: ${value ?? ""}`));
-          });
+        // Curated fields instead of dumping the raw record: hide GIS
+        // housekeeping (FID, dates, acres) and render epoch-ms dates readably.
+        const LABELS = {
+          COUNTY: "Counties",
+          DEERDAU: "Deer DAU",
+          ELKDAU: "Elk DAU",
+          ANTDAU: "Pronghorn DAU",
+          MOOSEDAU: "Moose DAU",
+          BEARDAU: "Bear DAU",
+          LIONDAU: "Lion region",
+        };
+        const shown = new Set();
+        for (const [rawKey, label] of Object.entries(LABELS)) {
+          const entry = Object.entries(props).find(
+            ([k, v]) =>
+              k.toUpperCase() === rawKey && v !== null && v !== "",
+          );
+          if (entry) {
+            shown.add(entry[0].toUpperCase());
+            box.appendChild(el("div", null, `${label}: ${entry[1]}`));
+          }
+        }
+
+        // Fallback for layers without curated fields (public access, DAU
+        // lines): show the first few non-housekeeping properties.
+        if (!shown.size) {
+          const HIDE = /^(FID|OBJECTID|.*DATE.*|.*_DATE|AcresGISCa|SHAPE.*)$/i;
+          Object.entries(props)
+            .filter(([k]) => !HIDE.test(k))
+            .slice(0, 8)
+            .forEach(([k, v]) => {
+              box.appendChild(
+                el("div", null, `${k}: ${fmtValue(k, v)}`),
+              );
+            });
+        }
+
+        // Acres from the GIS field, formatted; shown for polygons only.
+        if (!cfg.isLine) {
+          const acres = Object.entries(props).find(
+            ([k]) => k.toUpperCase() === "ACRESGISCA",
+          )?.[1];
+          if (typeof acres === "number" && acres > 0) {
+            box.appendChild(
+              el(
+                "div",
+                null,
+                `Area: ${Math.round(acres).toLocaleString()} acres ` +
+                  `(~${Math.round(acres / 640)} sq mi)`,
+              ),
+            );
+          }
+        }
+
+        // Last boundary edit, human-readable instead of epoch milliseconds.
+        const editTs = Object.entries(props).find(([k]) =>
+          /^EDIT_DATE$/i.test(k),
+        )?.[1];
+        const edited = fmtMsDate(editTs);
+        if (edited) {
+          box.appendChild(el("div", null, `Boundary last edited: ${edited}`));
+        }
 
         // Attach per-GMU big-game stats when clicking a GMU boundary.
-        if (SPECIES_STATS && key === "gmu") {
+        if (key === "gmu") {
           const gmuCode = String(props.GMUID ?? props.GMU ?? "").padStart(
             3,
             "0",
           );
+          // Highlight the clicked unit (same visual as the search-box path).
+          highlightUnit(gmuCode, layer);
+
+          if (SPECIES_STATS) {
           const season = document.getElementById("seasonSelect")?.value ?? "all";
           const year = document.getElementById("yearSelect")?.value ?? "";
           const sex = document.getElementById("sexSelect")?.value ?? "any";
@@ -171,6 +232,7 @@ async function loadLayer(key) {
           // Always update the stats panel below the map on every GMU click,
           // even when there is no data for the current filter combination.
           showStatCard(gmuCode);
+          }
         }
 
         L.popup().setLatLng(event.latlng).setContent(box).openOn(map);
@@ -397,6 +459,33 @@ function el(tag, cls, text) {
   if (cls) node.className = cls;
   if (text != null) node.textContent = text;
   return node;
+}
+
+// Format an epoch-milliseconds timestamp (CPW EDIT_DATE style) as a real
+// date. Returns null for null/empty/nonsense input so callers can skip it.
+function fmtMsDate(value) {
+  if (value == null || value === "") return null;
+  const ms = Number(value);
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  // CPW timestamps are in ms; a plain seconds value would land in 1970.
+  const seconds = ms > 1e12 ? ms / 1000 : ms;
+  const date = new Date(seconds * 1000);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// Render a property value for the fallback popup: format epoch-ms date
+// fields, pass everything else through as text.
+function fmtValue(key, value) {
+  if (/date/i.test(key)) {
+    const formatted = fmtMsDate(value);
+    if (formatted) return formatted;
+  }
+  return String(value ?? "");
 }
 
 function statRow(label, value) {
@@ -685,10 +774,16 @@ if (statShareBtn) {
               "X-Requested-With": "XMLHttpRequest",
               "X-CSRFToken": token,
             },
-            body: new URLSearchParams({ text }),
+            body: new URLSearchParams({
+              text,
+              kind: "gmu",
+              payload: JSON.stringify({ gmu: lastGmu }),
+            }),
           });
           if (resp.ok) {
-            window.location.href = item.dataset.chatUrl;
+            // Land on the chat that received the share; ?gmu= re-triggers
+            // the highlight when the visitor clicks the unit link.
+            window.location.href = item.dataset.chatUrl + (item.dataset.chatUrl.includes("?") ? "&" : "?") + "gmu=" + encodeURIComponent(lastGmu);
           } else {
             alert("Couldn't share to chat (HTTP " + resp.status + "). Try again.");
           }

@@ -5,17 +5,7 @@
   <h1 class="section-heading">My Profile</h1>
 
   <div class="d-flex align-items-center gap-3 mb-4">
-    {% if profile.photo %}
-      <img src="{{ profile.photo.url }}"
-          alt="{{ profile.display_name }}"
-          class="rounded-circle border"
-          style="width: 350px; height: 350px; object-fit: cover;">
-    {% else %}
-      <span class="badge rounded-pill bg-secondary"
-            style="width: 96px; height: 96px; display: inline-flex; align-items: center; justify-content: center; font-size: 2.5rem;">
-        {{ user.get_username|first|upper }}
-      </span>
-    {% endif %}
+    {% include "partials/_avatar.html" with user=user size=96 %}
     <div>
       <h2 class="mb-1">{{ profile.display_name }}</h2>
       <p class="text-muted mb-0">
@@ -32,7 +22,15 @@
 
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ form.non_field_errors }}
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-info">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.total_error_count %}
+      <div class="alert alert-warning py-2">Please fix the highlighted field{{ form.total_error_count|pluralize }} before saving.</div>
+    {% endif %}
 
     <div class="row g-3">
       <div class="col-6">
@@ -44,6 +42,17 @@
         <label class="form-label" for="{{ form.last_name.id_for_label }}">Last name</label>
         {{ form.last_name }}
         {{ form.last_name.errors }}
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+          <div class="alert alert-danger py-2 px-3 mt-2 mb-0">{{ form.email.errors }}</div>
+        {% endif %}
+        {% if form.email.help_text %}<div class="form-text">{{ form.email.help_text }}</div>{% endif %}
       </div>
     </div>
 

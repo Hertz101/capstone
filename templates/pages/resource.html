@@ -54,7 +54,7 @@
           </ul>
         {% endfor %}
         {% for label, href in card.links %}
-          <a class="resource-link" href="{{ href }}"{% if href|slice:"4" == "http" %} target="_blank" rel="noopener"{% endif %}>{{ label }}</a>
+          <a class="resource-link theme-primary btn-solid btn-styled" href="{{ href }}"{% if href|slice:"4" == "http" %} target="_blank" rel="noopener"{% endif %}>{{ label }}</a>
         {% endfor %}
       </div>
     </article>

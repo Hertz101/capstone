@@ -114,6 +114,61 @@ are queried directly from CPW's FeatureServer:
 Terrain tiles served by MapTiler with an API key (512px tiles,
 `zoomOffset: -1`), with attribution rendered.
 
+### 4. Group-chat email notifications — Gmail
+
+Every chat post and like emails the other members of the group. Mail is sent
+through Gmail SMTP using Django's `MAILERS` setting (this project targets
+Django 6, where `MAILERS` replaces the individual `EMAIL_*` settings — the
+`config/settings.py` equivalent of the classic block shown in many tutorials).
+
+**Step-by-step setup:**
+
+1. **Enable 2-Step Verification** on the Google account you'll send from:
+   https://myaccount.google.com/security
+2. **Create an App Password** (Gmail blocks plain logins from apps):
+   https://myaccount.google.com/apppasswords → choose "Mail" → Google copies a
+   16-character password like `abcd efgh ijkl mnop`.
+3. **Add these lines to the `.env` file** in the project root (the file already
+   contains placeholder entries — replace the values, do NOT put real
+   credentials in settings.py or in git):
+
+   ```bash
+   # settings.py equivalent (classic style, for reference):
+   # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+   # EMAIL_HOST = 'smtp.gmail.com'
+   # EMAIL_PORT = 587
+   # EMAIL_USE_TLS = True
+   # EMAIL_USE_SSL = False          # mutually exclusive with TLS
+   # EMAIL_HOST_USER = 'you@gmail.com'
+   # EMAIL_HOST_PASSWORD = 'your_16_character_app_password'
+   # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+   # This project's actual .env format (read by config/settings.py):
+   EMAIL_HOST_USER=you@gmail.com
+   EMAIL_HOST_PASSWORD=abcdefghijklmnop       # app password, spaces removed
+   DEFAULT_FROM_EMAIL=you@gmail.com
+   ```
+
+   `EMAIL_HOST`/`PORT`/`TLS` already default correctly in `settings.py`;
+   only the address and app password are needed.
+4. **Restart the server** (`runserver` re-reads `.env` on start).
+5. **Verify without sending anything:** with the values unset, every post/like
+   prints the full email to the runserver console (console backend) — a good
+   demo-safe mode. With values set, post a message in a group whose other
+   member has a real email address and check their inbox.
+
+**Troubleshooting**
+
+| Symptom | Fix |
+|---|---|
+| `535-5.7.8 Username and Password not accepted` | You used your normal Gmail password, or spaces remain in the app password. Regenerate at the App Passwords page. |
+| `534` / "app not verified" | 2-Step Verification isn't enabled on the account. |
+| `Connection refused` / timeout | Wrong port or TLS flag — keep port `587` + `use_tls: True`. |
+| Nothing happens, no error | No other group member has an email address set, or you emailed yourself (the actor is skipped). |
+
+Gmail limits sending to ~500 recipients/day — irrelevant for a capstone demo,
+but a real deployment would move sending to a background task.
+
 ## Architecture decisions worth knowing
 
 **Why no database for hunting data.** The harvest dataset is derived,

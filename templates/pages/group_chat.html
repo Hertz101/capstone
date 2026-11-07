@@ -1,6 +1,13 @@
-{% extends "base.html" %} {% load static %} {% block title %}Group Chat — Rocky
-Mountain Coalition{% endblock title %} {% block content %}
+{% extends "base.html" %} {% load static %} {% block title %}{% if chat_group %}{{ chat_group.name }}{% else %}Group Chat{% endif %} — Rocky Mountain Coalition{% endblock title %} {% block content %}
 <section class="container my-5">
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  {% endif %}
   <div class="d-flex justify-content-between align-items-center">
     <h1 class="section-heading">
       {% if chat_group %}{{ chat_group.name }}{% else %}Group Chat{% endif %}
@@ -134,43 +141,27 @@ Mountain Coalition{% endblock title %} {% block content %}
       {% if chat_messages %}
       <div class="list-group mb-4" id="chatMessages">
         {% for message in chat_messages %}
+        {% if message.kind == 'system' %}
+        {# System announcement: centered banner, no actions #}
+        <div class="chat-system-row">
+          <span class="chat-system-banner">{{ message.text }}</span>
+        </div>
+        {% else %}
         <div
           class="list-group-item{% if message.kind == 'plan' %} chat-card chat-card-plan{% elif message.kind == 'packing' %} chat-card chat-card-packing{% elif message.kind == 'gmu' %} chat-card chat-card-gmu{% endif %}"
         >
           <div class="d-flex w-100 justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
-              {% with profile=message.user.profile %} {% if profile and
-              profile.photo %}
-              <img
-                src="{{ profile.photo.url }}"
-                alt="{{ profile.display_name }}"
-                class="rounded-circle"
-                style="width: 32px; height: 32px; object-fit: cover"
-              />
-              {% else %}
-              <span
-                class="badge rounded-pill bg-secondary"
-                style="
-                  width: 32px;
-                  height: 32px;
-                  display: inline-flex;
-                  align-items: center;
-                  justify-content: center;
-                "
-                >{{ message.user.get_username|first|upper }}</span
-              >
-              {% endif %}
-              <strong
-                >{{ profile.display_name|default:message.user.get_username
-                }}</strong
-              >
+              {% with profile=message.user.profile %}
+              {% include "partials/_avatar.html" with user=message.user size=32 %}
+              <strong>{{ profile.display_name|default:message.user.get_username }}</strong>
               {% endwith %}
             </div>
             <small class="text-muted"
               >{{ message.created_at|date:"M j, Y g:i A" }}</small
             >
           </div>
-          <p class="mb-0">{{ message.text }}</p>
+          <p class="mb-0">{{ message.text }}{% if message.edited %} <small class="text-muted">(edited {{ message.updated_at|date:"g:i A" }})</small>{% endif %}</p>
           {% if message.kind == 'plan' and message.payload %}
           <div class="chat-share-card mt-2">
             <h4>🎯 Hunt Plan</h4>
@@ -223,7 +214,36 @@ Mountain Coalition{% endblock title %} {% block content %}
             </p>
           </div>
           {% endif %}
+          <div class="chat-like-row mt-1">
+            <button
+              type="button"
+              class="btn btn-sm chat-like-btn{% if message.pk in liked_ids %} liked{% endif %}"
+              data-like-url="{% url 'message_like' message.pk %}"
+              aria-pressed="{% if message.pk in liked_ids %}true{% else %}false{% endif %}"
+              aria-label="Like this message"
+            >
+              <span class="chat-like-heart" aria-hidden="true">♥</span>
+              <span class="chat-like-word">Like</span>
+              <span class="chat-like-count">{{ message.liked_by.count }}</span>
+            </button>
+            {% if user.is_authenticated and message.user_id == user.pk and message.kind == 'text' %}
+            <form method="post" action="{% url 'message_edit' message.pk %}" class="chat-msg-form">
+              {% csrf_token %}
+              <input type="hidden" name="text" value="{{ message.text }}" data-edit-input />
+              <button type="button" class="btn btn-sm btn-outline-secondary chat-msg-btn"
+                      data-edit-btn="{{ message.pk }}" aria-label="Edit message">✏️</button>
+            </form>
+            {% endif %}
+            {% if user.is_authenticated %}{% if message.user_id == user.pk or message.pk in deletable_ids %}
+            <form method="post" action="{% url 'message_delete' message.pk %}" class="chat-msg-form"
+                  onsubmit="return confirm('Delete this message?')">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger chat-msg-btn" aria-label="Delete message">🗑️</button>
+            </form>
+            {% endif %}{% endif %}
+          </div>
         </div>
+        {% endif %}
         {% endfor %}
       </div>
       {% else %}
@@ -258,4 +278,65 @@ Mountain Coalition{% endblock title %} {% block content %}
 <link rel="stylesheet" href="{% static 'css/group_chat.css' %}" />
 {% endblock extra_css %} {% block js %} {{ block.super }}
 <script src="{% static 'js/chat_sidebar.js' %}?v={{ chat_sidebar_mtime }}"></script>
+<script>
+  // Like buttons: toggle via AJAX, update count/state in place.
+  document.querySelectorAll(".chat-like-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const csrf = document.querySelector("input[name=csrfmiddlewaretoken]");
+      const token =
+        csrf?.value ||
+        document.cookie
+          .split(";")
+          .map((c) => c.trim())
+          .find((c) => c.startsWith("csrftoken="))
+          ?.split("=")[1];
+      if (!token) return;
+      try {
+        const resp = await fetch(btn.dataset.likeUrl, {
+          method: "POST",
+          headers: { "X-CSRFToken": token, "X-Requested-With": "XMLHttpRequest" },
+        });
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const data = await resp.json();
+        btn.classList.toggle("liked", data.liked);
+        btn.setAttribute("aria-pressed", String(data.liked));
+        btn.querySelector(".chat-like-count").textContent = data.count;
+      } catch (err) {
+        console.error("Like failed:", err);
+      }
+    });
+  });
+
+  // Inline edit: swap the ✏️ button for a text input + save/cancel.
+  document.querySelectorAll("[data-edit-btn]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const form = btn.closest("form");
+      const input = form.querySelector("[data-edit-input]");
+      const original = input.value;
+      input.type = "text";
+      input.className = "form-control form-control-sm";
+      input.style.maxWidth = "24rem";
+      btn.type = "submit";
+      btn.textContent = "Save";
+      btn.classList.remove("btn-outline-secondary");
+      btn.classList.add("btn-primary");
+
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "btn btn-sm btn-outline-secondary chat-msg-btn";
+      cancel.textContent = "Cancel";
+      cancel.addEventListener("click", () => window.location.reload());
+      form.appendChild(cancel);
+
+      form.addEventListener("submit", () => {
+        input.value = input.value.trim();
+        if (!input.value || input.value === original) {
+          event.preventDefault();
+          window.location.reload();
+        }
+      });
+      input.focus();
+    });
+  });
+</script>
 {% endblock js %}

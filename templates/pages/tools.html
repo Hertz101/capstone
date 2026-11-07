@@ -1,0 +1,48 @@
+{% extends "base.html" %} {% load static %} {% block title %}Tools — Rocky
+Mountain Coalition{% endblock title %} {% block content %}
+<section class="container my-5">
+  <h1 class="section-heading">Tools</h1>
+  <p class="lead">
+    Everything you need to plan, pack, and share a successful season.
+  </p>
+  <div class="row g-4 mt-2">
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h2 class="h5 card-title">🗺️ Hunting Map</h2>
+          <p class="card-text">
+            Explore Colorado GMUs on an interactive map and pick your unit.
+          </p>
+          <a href="{% url 'maps' %}" class="btn btn-primary">Open the map</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h2 class="h5 card-title">🎒 Your Trip</h2>
+          <p class="card-text">
+            Build your pre-hunt checklist and tick items off as you pack.
+          </p>
+          <a href="{% url 'your_trip' %}" class="btn btn-primary"
+            >Open the checklist</a
+          >
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h2 class="h5 card-title">📚 Resources</h2>
+          <p class="card-text">
+            Regulations, draw odds, and reference PDFs for the season.
+          </p>
+          <a href="{% url 'resource' %}" class="btn btn-primary"
+            >Browse resources</a
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock content %}

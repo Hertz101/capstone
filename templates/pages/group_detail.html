@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}{{ group.name }} — Members{% endblock
-title %} {% block content %}
+{% extends "base.html" %} {% block title %}{{ group.name }} — Members{% endblock title %} {% block content %}
 <section class="container my-5" style="max-width: 640px">
   <h1 class="section-heading">{{ group.name }}</h1>
   <p class="text-muted">
@@ -14,26 +13,7 @@ title %} {% block content %}
       class="list-group-item d-flex justify-content-between align-items-center"
     >
       <div class="d-flex align-items-center gap-2">
-        {% if member.profile.photo %}
-        <img
-          src="{{ member.profile.photo.url }}"
-          alt="{{ member.profile.display_name }}"
-          class="rounded-circle"
-          style="width: 32px; height: 32px; object-fit: cover"
-        />
-        {% else %}
-        <span
-          class="badge rounded-pill bg-secondary"
-          style="
-            width: 32px;
-            height: 32px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-          "
-          >{{ member.get_username|first|upper }}</span
-        >
-        {% endif %}
+        {% include "partials/_avatar.html" with user=member size=32 %}
         <strong
           >{{ member.profile.display_name|default:member.get_username }}</strong
         >
@@ -72,6 +52,18 @@ title %} {% block content %}
   </form>
   {% endfor %} {% elif is_creator %}
   <p class="text-muted">Everyone is already in this group.</p>
+  {% endif %}
+
+  {% if is_creator %}
+  <form
+    method="post"
+    class="mt-4"
+    onsubmit="return confirm('Delete this group and all its messages? This cannot be undone.')"
+  >
+    {% csrf_token %}
+    <input type="hidden" name="action" value="delete" />
+    <button type="submit" class="btn btn-outline-danger">Delete group</button>
+  </form>
   {% endif %}
 
   <div class="mt-4 d-flex gap-2">

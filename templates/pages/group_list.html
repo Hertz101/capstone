@@ -50,9 +50,7 @@ Coalition{% endblock title %} {% block content %}
       <div>
         <strong>{{ group.name }}</strong>
         <small class="text-muted d-block"
-          >{{ group.members.count }} member{{ group.members.count|pluralize }}{%
-          if group.created_by %} · created by {{ group.created_by.get_username
-          }}{% endif %}</small
+          >{{ group.members.count }} member{{ group.members.count|pluralize }}{% if group.created_by %} · created by {{ group.created_by.get_username }}{% endif %}</small
         >
       </div>
       <form method="post" action="{% url 'group_join' group.pk %}">

@@ -1,0 +1,96 @@
+/* Sticky footer layout: body fills the viewport as a flex column so the
+   footer always sits at the bottom of the page instead of floating over
+   the content (replaces Bootstrap's fixed-bottom). */
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
+}
+
+@media (max-width: 767.98px) {
+  .resource-grid { grid-template-columns: 1fr; }
+}
+/* Group chat like button */
+.chat-like-row { display: flex; }
+.chat-like-btn {
+  border: 1px solid var(--hunt-border, #dce5da);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--hunt-muted, #6b776d);
+  padding: 0 0.7rem;
+  line-height: 1.6;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: transform 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.chat-like-btn:hover { color: #c0264c; border-color: #f3c2ce; }
+.chat-like-btn .chat-like-heart { font-size: 1rem; }
+.chat-like-btn.liked {
+  color: #c0264c;
+  border-color: #f3c2ce;
+  background: #fdf2f5;
+}
+.chat-like-btn.liked .chat-like-heart { animation: like-pop 0.25s ease; }
+
+/* Boxed word "Like" beside the heart — blue box, Facebook-style */
+.chat-like-word {
+  border: 1px solid #1d6fd8;
+  border-radius: 6px;
+  padding: 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: #fff;
+  background: #1d6fd8;
+}
+
+/* Heart stays red; only the LIKE chip is blue. After liking, chip turns red. */
+.chat-like-btn { color: #c0264c; border-color: #f3c2ce; }
+.chat-like-btn:hover { border-color: #c0264c; }
+.chat-like-btn .chat-like-heart { color: #e0245e; }
+.chat-like-btn.liked { color: #c0264c; background: #fdf2f5; }
+
+/* Once someone has liked it, the word swaps to "Liked" */
+.chat-like-btn.liked .chat-like-word { border-color: #c0264c; background: #c0264c; }
+.chat-like-btn.liked .chat-like-word::after { content: "d"; }
+
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-like-btn { transition: none; }
+  .chat-like-btn.liked .chat-like-heart { animation: none; }
+}
+
+/* Per-message action buttons (edit/delete), aligned with the like row */
+.chat-msg-form { display: inline-flex; gap: 0.25rem; align-items: center; }
+.chat-msg-btn { padding: 0 0.5rem; line-height: 1.4; }
+
+/* System announcements (member added, etc.): centered soft banner */
+.chat-system-row {
+  display: flex;
+  justify-content: center;
+  padding: 0.15rem 0;
+  background: transparent;
+  border: 0;
+}
+.chat-system-banner {
+  background: var(--hunt-green-light, #edf3e9);
+  color: var(--hunt-green, #24452e);
+  border: 1px solid var(--hunt-border, #dce5da);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.3rem 1rem;
+  text-align: center;
+}
