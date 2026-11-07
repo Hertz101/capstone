@@ -2,26 +2,30 @@
 
 A Django web platform for Colorado big-game hunters: an interactive Game
 Management Unit (GMU) map with real harvest statistics, a step-by-step hunt
-planner, pre-trip packing checklists, and regulation reference resources —
-built entirely on public Colorado Parks & Wildlife (CPW) data.
+planner, pre-trip packing checklists, regulation reference resources, and a
+group chat with email notifications — built entirely on public Colorado Parks
+& Wildlife (CPW) data.
 
 ## Stack
 
 | Layer        | Technology                                                     |
 | ------------ | -------------------------------------------------------------- |
-| Backend      | Django (views, URL routing, template rendering)                |
+| Backend      | Django 6 (views, URL routing, template rendering, `MAILERS`)    |
 | Frontend     | Django templates, vanilla JavaScript, Leaflet 1.x, Bootstrap 5 |
 | Maps         | Leaflet + MapTiler terrain tiles                               |
 | GIS data     | CPW ArcGIS FeatureServer (live GeoJSON queries)                |
 | Harvest data | Static JSON produced by an offline PDF-parsing pipeline        |
-| Tests        | Django test runner (22 tests)                                  |
+| Email        | Gmail SMTP (Django 6 `MAILERS`), multipart text+HTML templates |
+| Accounts     | Django auth + per-user hunter Profile (photo, display name)    |
+| Tests        | Django test runner                                             |
 
 ## Getting started
 
 ```bash
 python -m venv venv
 ./venv/bin/pip install -r requirements.txt
-# add MAPTILER_API_KEY to a .env file (see Configuration below)
+# add MAPTILER_API_KEY and the Gmail block to a .env file (see Configuration)
+./venv/bin/python manage.py migrate
 ./venv/bin/python manage.py runserver
 ./venv/bin/python manage.py test          # run the test suite
 ```
@@ -32,10 +36,19 @@ python -m venv venv
 
 Interactive map of Colorado with toggleable CPW GIS layers: big-game GMU
 boundaries, CPW public-access properties, Walk-In Access areas, and Elk/Deer
-DAU boundaries. Clicking a GMU shows its harvest statistics (harvest, hunters,
-success rate, sex breakdown, per-season detail) filtered live by
-species / season / sex / year pickers. A GMU search box autocompletes unit
-numbers and highlights + zooms to the selected polygon.
+DAU boundaries. Clicking a GMU:
+
+- **highlights the polygon** (yellow fill + pulsing outline) and zooms to fit,
+  the same visual the search box uses
+- opens a **curated popup** — only meaningful fields (counties, DAU codes),
+  the unit area in acres/sq-mi, and the boundary's last-edit date as a real
+  date instead of an epoch-ms integer
+- shows harvest statistics (harvest, hunters, success rate, sex breakdown,
+  per-season detail) filtered live by species / season / sex / year pickers
+- offers **Share to group chat**, which posts a proper GMU card message
+
+A GMU search box autocompletes unit numbers and highlights + zooms to the
+selected polygon. Deep links (`/maps/?gmu=043`) highlight the unit on load.
 
 ### Hunt Planner (`/hunting/plan/`)
 
@@ -69,6 +82,29 @@ types are supported:
 
 The first card, **What's New**, summarizes the current year's regulation
 changes and is designed to be refreshed annually (see below).
+
+### Group chat (`/group_chat/`)
+
+Login-required chat rooms per group, plus a global room:
+
+- **Posts and shares** — plain messages plus three rich card types (hunt
+  plan, packing list, selected GMU) rendered from JSON payloads
+- **Likes** — one-click ❤ toggle with a live count; senders identified as
+  "Name (username)"
+- **Editing and moderation** — authors edit their own text messages (an
+  "(edited <time>)" marker appears); authors delete their own messages;
+  the group creator can delete anyone's
+- **Membership announcements** — adding a member posts a 👋 banner in the
+  chat and emails the new member a welcome
+- **Rate limits** — 10 posts/min, 30 likes/min per user (friendly 429 page)
+- **Email notifications** — posts, likes, and welcomes email every other
+  member via a styled multipart template (`templates/emails/`), sent on a
+  background thread so posting stays instant; Gmail connection drops retry
+  with backoff
+
+### Tools (`/tools/`) — hub linking the map, checklist, and resources.
+
+### Search (`/search/`) — one box over groups, messages, resources, pages.
 
 ## How the CPW data gets into the app
 
@@ -166,8 +202,9 @@ Django 6, where `MAILERS` replaces the individual `EMAIL_*` settings — the
 | `Connection refused` / timeout | Wrong port or TLS flag — keep port `587` + `use_tls: True`. |
 | Nothing happens, no error | No other group member has an email address set, or you emailed yourself (the actor is skipped). |
 
-Gmail limits sending to ~500 recipients/day — irrelevant for a capstone demo,
-but a real deployment would move sending to a background task.
+Gmail limits sending to ~500 recipients/day. Sending runs on a background
+thread (one per post/like) with retry-with-backoff on connection drops; a
+full production deployment would move this to a proper task queue.
 
 ## Architecture decisions worth knowing
 
@@ -192,6 +229,37 @@ is straightforward once authentication exists.
 **API key handling.** The MapTiler key is injected server-side into a
 `data-maptiler-key` attribute on the map element (`{{ maptiler_key|escapejs }}`);
 it never appears in a static JS file.
+
+## Deployment (Render)
+
+The repo is deploy-ready:
+
+- `requirements.txt` includes `gunicorn`, `whitenoise`, `Pillow`,
+  `django-ratelimit` (the earlier file was malformed and is fixed)
+- `STATIC_ROOT` + WhiteNoise compressed storage — `collectstatic` output is
+  served by Django itself, no extra server
+- `DEBUG` **defaults to False**; set `DJANGO_DEBUG=true` in local `.env` only
+- `ALLOWED_HOSTS` falls back to localhost defaults; set
+  `DJANGO_ALLOWED_HOSTS=yourapp.onrender.com` in the Render dashboard
+
+**Render dashboard env vars** (see the checklist comments in `.env`):
+
+```
+DJANGO_DEBUG=false
+DJANGO_ALLOWED_HOSTS=yourapp.onrender.com
+DJANGO_SECRET_KEY=<python -c "import secrets; print(secrets.token_urlsafe(50))">
+MAPTILER_API_KEY=...
+EMAIL_HOST_USER / EMAIL_HOST_PASSWORD / DEFAULT_FROM_EMAIL   (Gmail block)
+```
+
+**Build command:** `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate`
+**Start command:** `gunicorn config.wsgi`
+
+⚠️ **Known limitation:** the default SQLite database lives on Render's
+ephemeral disk — every deploy/restart erases users and messages. For real
+persistence attach Render Postgres (`dj-database-url` + `psycopg`), or accept
+the erasure for demo purposes. Uploaded profile photos have the same
+ephemeral-disk issue.
 
 ## Updating content
 
@@ -226,7 +294,13 @@ visitors.
 
 - PDF parsing regexes are coupled to CPW's current report layout; a format
   change requires updating the parsers
-- Plans and checklists are per-device (no accounts yet)
+- Plans and checklists are per-device (localStorage, not per-account)
+- Group chat history is capped at the latest 50 messages per group; older
+  messages are unreachable (no pagination yet)
+- Like counts update on page load only — live updates would need polling or
+  websockets
+- SQLite + ephemeral disk on Render (see Deployment) — not a data-loss risk
+  locally
 - GIS queries download full layers (`where=1=1`); fine at Colorado scale,
   spatial filtering would be needed for larger datasets
 - Checklist persistence keys are index-based (see above)
@@ -234,11 +308,17 @@ visitors.
 ## Project layout
 
 ```
-pages/          content pages (home, resources, your trip)
+config/         settings (Django 6 MAILERS, WhiteNoise, Denver timezone), urls
+pages/          content pages, group chat, profiles, search
   content.py    ALL page content data — edit this to change what visitors see
-  views.py      thin views: render templates, resolve URL placeholders
+  views.py      chat + group + profile + search views (membership-guarded)
+  models.py     Message (likes, edits, system kind), ChatGroup, Profile
+  notifications.py  email building + async background-thread sending
+  forms.py      signup (required email), profile, group creation
+  templates/    pages/ plus emails/ (multipart notification template)
 hunting/        hunt planner + interactive map
-scripts/        extract_elk_stats.py — PDF → JSON pipeline
+scripts/        CPW PDF → JSON extraction pipeline + parser tests
+docs/           manual test cases, code review notes
 static/
   js/           map page JS, checklist, resources, shared CPW config
   hunting/      planner JS, planner map JS, elk_stats.json
