@@ -19,3 +19,4 @@ media/
 # Local scripts output
 *.log
 .pytest_cache/
+staticfiles/
