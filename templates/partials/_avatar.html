@@ -1,5 +1,5 @@
-{# Avatar with photo-or-initials fallback. Params: user, size (px, default 32).
-#} {% with size_px=size|default:32 %} {% if user.profile.photo %}
+
+{% with size_px=size|default:32 %} {% if user.profile.photo %}
 <img
   src="{{ user.profile.photo.url }}"
   alt="{{ user.profile.display_name }}"

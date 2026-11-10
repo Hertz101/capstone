@@ -42,6 +42,7 @@ class PageViewTests(TestCase):
                 "username": "hunter1",
                 "password1": "s3cure-pass!",
                 "password2": "s3cure-pass!",
+                "email": "hunter1@example.com",
                 "first_name": "Adam",
                 "last_name": "H",
                 "city": "Denver",
@@ -209,6 +210,7 @@ class ProfileViewTests(TestCase):
         response = self.client.post(
             reverse("profile"),
             {
+                "email": self.user.email or "edited@example.com",
                 "first_name": "Adam",
                 "last_name": "Hunter",
                 "city": "Denver",
