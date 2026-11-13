@@ -207,7 +207,11 @@ MAILERS = {
             # Spaces are stripped because Google shows app passwords as
             # "abcd efgh ijkl mnop" and the SMTP server wants it without.
             'password': os.environ.get('EMAIL_HOST_PASSWORD', '').replace(' ', ''),
-            'use_tls': True,
+            # 587 uses STARTTLS (use_tls). Port 465 is implicit SSL (use_ssl).
+            # Render free instances block outbound 587, so set EMAIL_PORT=465
+            # and EMAIL_USE_SSL=true there if emails fail with Errno 101.
+            'use_tls': os.environ.get('EMAIL_USE_SSL', '') != 'true',
+            'use_ssl': os.environ.get('EMAIL_USE_SSL', '') == 'true',
         },
     },
     # Fallback used when no Gmail credentials are set: prints emails to the
