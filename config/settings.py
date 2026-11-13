@@ -27,10 +27,20 @@ load_dotenv(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Set DJANGO_SECRET_KEY in the environment (e.g. production .env).
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-@q^*pfx9*mt3n%9zu6&(trzssau2)ma0cf@@r90k8w&(7szl!&"
+# DJANGO_SECRET_KEY must come from the environment in production (Render). The
+# insecure literal below is only ever used for local development when
+# DJANGO_DEBUG is explicitly true; otherwise the process fails fast instead of
+# silently running with a key that was committed to the repository.
+if not os.environ.get("DJANGO_SECRET_KEY"):
+    if os.environ.get("DJANGO_DEBUG", "").lower() != "true":
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY is not set. Provide it in the environment "
+            "(or a local .env); set DJANGO_DEBUG=true for local dev only."
+        )
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or (
+    "django-insecure-dev-only-key-not-for-production"
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -198,3 +208,8 @@ MAILERS = {
 
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL') or \
     os.environ.get('EMAIL_HOST_USER') or 'webmaster@localhost'
+
+# Absolute base URL used when building links without a request object
+# (e.g. emails from tests/shell). Set it in production, e.g.
+# SITE_BASE_URL=https://your-app.onrender.com
+SITE_BASE_URL = os.environ.get('SITE_BASE_URL', '')

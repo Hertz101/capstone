@@ -425,3 +425,189 @@ class PlannerViewTests(TestCase):
         response = self.client.get(reverse("planner"))
         self.assertIn("MAPTILER_API_KEY", response.context)
         self.assertEqual(response.context["MAPTILER_API_KEY"], "test-maptiler-key")
+class MessagePermissionTests(TestCase):
+    """Like/edit/delete on chat messages: membership and authorship rules."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth.models import User
+
+        from .models import ChatGroup, Message
+
+        cls.author = User.objects.create_user("author", password="pw12345!")
+        cls.member = User.objects.create_user("member2", password="pw12345!")
+        cls.outsider = User.objects.create_user("outsider2", password="pw12345!")
+        cls.creator = User.objects.create_user("creator2", password="pw12345!")
+
+        cls.group = ChatGroup.objects.create(name="Perms Crew", created_by=cls.creator)
+        cls.group.members.add(cls.creator, cls.author, cls.member)
+        cls.group_message = Message.objects.create(
+            group=cls.group, user=cls.author, text="inside joke"
+        )
+        cls.global_message = Message.objects.create(user=cls.author, text="global hello")
+
+    def test_outsider_cannot_like_group_message(self):
+        from .models import Message
+
+        self.client.force_login(self.outsider)
+        response = self.client.post(reverse("message_like", args=[self.group_message.pk]))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.group_message.liked_by.count(), 0)
+
+    def test_member_can_toggle_like(self):
+        from .models import Message
+
+        self.client.force_login(self.member)
+        first = self.client.post(reverse("message_like", args=[self.group_message.pk]))
+        self.assertJSONEqual(first.content, {"liked": True, "count": 1})
+        second = self.client.post(reverse("message_like", args=[self.group_message.pk]))
+        self.assertJSONEqual(second.content, {"liked": False, "count": 0})
+        self.assertEqual(
+            Message.objects.get(pk=self.group_message.pk).liked_by.count(), 0
+        )
+
+    def test_anyone_signed_in_can_like_global_message(self):
+        self.client.force_login(self.outsider)
+        response = self.client.post(reverse("message_like", args=[self.global_message.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {"liked": True, "count": 1})
+
+    def test_only_author_can_edit(self):
+        from .models import Message
+
+        self.client.force_login(self.member)
+        self.client.post(
+            reverse("message_edit", args=[self.group_message.pk]),
+            {"text": "hacked"},
+        )
+        self.assertEqual(
+            Message.objects.get(pk=self.group_message.pk).text, "inside joke"
+        )
+
+    def test_author_edit_updates_text_and_marks_edited(self):
+        from .models import Message
+
+        self.client.force_login(self.author)
+        response = self.client.post(
+            reverse("message_edit", args=[self.group_message.pk]),
+            {"text": "revised text"},
+        )
+        self.assertRedirects(
+            response, reverse("group_chat_group", args=[self.group.pk])
+        )
+        msg = Message.objects.get(pk=self.group_message.pk)
+        self.assertEqual(msg.text, "revised text")
+        self.assertTrue(msg.edited)
+
+    def test_non_author_cannot_delete_group_message(self):
+        from .models import Message
+
+        self.client.force_login(self.member)
+        self.client.post(reverse("message_delete", args=[self.group_message.pk]))
+        self.assertTrue(Message.objects.filter(pk=self.group_message.pk).exists())
+
+    def test_group_creator_can_moderate_others_messages(self):
+        from .models import Message
+
+        self.client.force_login(self.creator)
+        response = self.client.post(reverse("message_delete", args=[self.group_message.pk]))
+        self.assertRedirects(
+            response, reverse("group_chat_group", args=[self.group.pk])
+        )
+        self.assertFalse(Message.objects.filter(pk=self.group_message.pk).exists())
+
+
+class SearchVisibilityTests(TestCase):
+    """Site search respects membership: outsiders see pages/resources only."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth.models import User
+
+        from .models import ChatGroup, Message
+
+        cls.member = User.objects.create_user("searcher", password="pw12345!")
+        cls.outsider = User.objects.create_user("searchoutsider", password="pw12345!")
+
+        cls.group = ChatGroup.objects.create(name="Elk Camp", created_by=cls.member)
+        cls.group.members.add(cls.member)
+        Message.objects.create(
+            group=cls.group, user=cls.member, text="secret elk spot coordinates"
+        )
+        Message.objects.create(user=cls.member, text="public elk advice")
+
+    def test_anonymous_search_finds_static_results_only(self):
+        response = self.client.get(reverse("search"), {"q": "elk"})
+        results = response.context["results"]
+        self.assertEqual(list(results["groups"]), [])
+        self.assertEqual(list(results["messages"]), [])
+
+    def test_non_member_does_not_see_private_group_or_messages(self):
+        self.client.force_login(self.outsider)
+        response = self.client.get(reverse("search"), {"q": "elk"})
+        results = response.context["results"]
+        self.assertEqual(list(results["groups"]), [])
+        self.assertFalse(any("secret" in m.text for m in results["messages"]))
+
+    def test_member_sees_their_groups_and_visible_messages(self):
+        self.client.force_login(self.member)
+        response = self.client.get(reverse("search"), {"q": "elk"})
+        results = response.context["results"]
+        self.assertIn(self.group, results["groups"])
+        texts = [m.text for m in results["messages"]]
+        self.assertIn("secret elk spot coordinates", texts)
+        self.assertIn("public elk advice", texts)
+
+    def test_empty_query_returns_empty_results(self):
+        self.client.force_login(self.member)
+        response = self.client.get(reverse("search"), {"q": "   "})
+        self.assertEqual(response.context["query"], "")
+        self.assertEqual(response.context["result_count"], 0)
+
+
+class ActiveMailerFallbackTests(TestCase):
+    """_active_mailer picks the console backend when SMTP creds are absent."""
+
+    @staticmethod
+    def _backend_class_name(mailers_obj):
+        return type(mailers_obj).__name__
+
+    def test_console_backend_without_credentials(self):
+        from .notifications import _active_mailer
+
+        with override_settings(
+            MAILERS={
+                "default": {
+                    "BACKEND": "x",
+                    "OPTIONS": {"username": "", "password": ""},
+                },
+                "console": {
+                    "BACKEND": "django.core.mail.backends.console.EmailBackend"
+                },
+            }
+        ):
+            mailer = _active_mailer()
+            self.assertEqual(mailer.alias, "console")
+
+    def test_default_backend_with_credentials(self):
+        from .notifications import _active_mailer
+
+        with override_settings(
+            MAILERS={
+                "default": {
+                    "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+                    "OPTIONS": {
+                        "host": "smtp.gmail.com",
+                        "port": 587,
+                        "username": "me@gmail.com",
+                        "password": "app-pw",
+                        "use_tls": True,
+                    },
+                },
+                "console": {
+                    "BACKEND": "django.core.mail.backends.console.EmailBackend"
+                },
+            }
+        ):
+            mailer = _active_mailer()
+            self.assertEqual(mailer.alias, "default")

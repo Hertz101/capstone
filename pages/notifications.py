@@ -51,6 +51,14 @@ def _deliver(email):
             time.sleep(1.5 * (attempt + 1))
     
 
+def _recipients_for(group, actor):
+    """Email addresses of group members other than the actor."""
+    return [
+        m.email for m in group.members.all()
+        if m.email and m.pk != actor.pk
+    ]
+
+
 def send_group_notification_async(group, actor, subject_line, body_lines, group_url=None, request=None):
     """Build the email now, deliver in a daemon thread, return immediately.
 
@@ -58,10 +66,7 @@ def send_group_notification_async(group, actor, subject_line, body_lines, group_
     a mail outage must never break posting or liking.
     """
     import threading
-    recipients = [
-        m.email for m in group.members.all()
-        if m.email and m.pk != actor.pk
-    ]
+    recipients = _recipients_for(group, actor)
     if not recipients:
         return
     email = _build(group, actor, subject_line, body_lines, group_url, request, recipients)
@@ -74,7 +79,10 @@ def _build(group, actor, subject_line, body_lines, group_url, request, recipient
     if request is not None and group_url:
         request_url = request.build_absolute_uri(group_url)
     elif group_url:
-        request_url = f"http://127.0.0.1:8000{group_url}"
+        # No request available (tests/shell): fall back to the configured
+        # site base URL so production emails never link to localhost.
+        base = getattr(settings, "SITE_BASE_URL", "").rstrip("/")
+        request_url = f"{base}{group_url}" if base else group_url
     else:
         request_url = None
     text = "\n".join([
@@ -129,10 +137,7 @@ def send_group_notification(group, actor, subject_line, body_lines, group_url=No
 
     Kept for tests and shell use; views should call the async version.
     """
-    recipients = [
-        m.email for m in group.members.all()
-        if m.email and m.pk != actor.pk
-    ]
+    recipients = _recipients_for(group, actor)
     if not recipients:
         return 0
     email = _build(group, actor, subject_line, body_lines, group_url, request, recipients)

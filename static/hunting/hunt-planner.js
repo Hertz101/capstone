@@ -210,7 +210,10 @@
 
     const species = speciesInput.value;
     const method = methodInput.value;
-    const season = seasonInput.disabled ? seasonInput.value : seasonInput.value;
+    // seasonInput.value is correct in both cases: syncSeasonWithMethod pins
+    // it to "Archery"/"Muzzleloader" when the select is disabled (locked),
+    // and leaves the user's choice in place when it's enabled.
+    const season = seasonInput.value;
     const gmu = gmuInput.value.trim();
     const licenseAnswer = licenseInput.value;
 

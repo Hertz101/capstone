@@ -25,6 +25,24 @@ from config.maptiler import get_maptiler_key
 logger = logging.getLogger(__name__)
 
 
+def _rate_limited_response(message="You're doing that too quickly."):
+    """Friendly 429 page shown when a user posts/likes too fast."""
+    from django.http import HttpResponse
+    return HttpResponse(
+        f"<h1>Slow down 🐎</h1><p>{message} "
+        "Wait a minute and try again.</p>",
+        status=429,
+    )
+
+
+def _static_mtime(asset_path):
+    """int mtime of a static asset for cache-busting, 1 if it can't be stat'd."""
+    try:
+        return int(os.path.getmtime(finders.find(asset_path) or asset_path))
+    except OSError:
+        return 1
+
+
 def home_view(request):
     animal_cards = [
         ("Elk", "img/elk.jpeg", "Elk"),
@@ -51,14 +69,7 @@ def maps_view(request):
     }
     if request.user.is_authenticated:
         context["chat_groups"] = request.user.chat_groups.all()
-    try:
-        context["maps_js_mtime"] = int(
-            os.path.getmtime(
-                finders.find("js/maps.js") or "js/maps.js"
-            )
-        )
-    except OSError:
-        context["maps_js_mtime"] = 1
+    context["maps_js_mtime"] = _static_mtime("js/maps.js")
     return render(request, "pages/maps.html", context)
 
 
@@ -71,6 +82,46 @@ def your_trip_view(request):
 
 def blog_view(request):
     return render(request, "pages/blog.html")
+
+
+@login_required
+@ratelimit(key="user", rate="10/m", method="POST", block=False)
+def _handle_chat_post(request, group):
+    """Process a POSTed chat message. Returns an HttpResponse (redirect or 429).
+
+    Shared cards (plan / packing / gmu) carry a kind + JSON payload;
+    anything else is a plain typed message. Invalid payloads degrade to text.
+    """
+    text = request.POST.get("text", "").strip()
+    kind = request.POST.get("kind", "text")
+    if kind not in {"text", "plan", "packing", "gmu"}:
+        kind = "text"
+    if request.limited:
+        return _rate_limited_response("You're posting too quickly.")
+    payload = None
+    if kind != "text":
+        try:
+            payload = json.loads(request.POST.get("payload", ""))
+        except (json.JSONDecodeError, TypeError):
+            kind = "text"
+        if not isinstance(payload, dict):
+            kind, payload = "text", None
+    if text:
+        message = Message.objects.create(
+            group=group, user=request.user, text=text, kind=kind, payload=payload,
+        )
+        if group:
+            send_group_notification_async(
+                group,
+                request.user,
+                "posted a message",
+                [message.text[:500]],
+                group_url=reverse("group_chat_group", args=[group.pk]),
+                request=request,
+            )
+    if group:
+        return redirect("group_chat_group", group_id=group.pk)
+    return redirect("group_chat")
 
 
 @login_required
@@ -93,51 +144,10 @@ def group_chat_view(request, group_id=None):
     else:
         group = None
 
-    try:
-        sidebar_mtime = int(
-            os.path.getmtime(finders.find("js/chat_sidebar.js") or "js/chat_sidebar.js")
-        )
-    except OSError:
-        sidebar_mtime = 1
+    sidebar_mtime = _static_mtime("js/chat_sidebar.js")
 
     if request.method == "POST":
-        text = request.POST.get("text", "").strip()
-        # Shared cards (plan / packing / gmu) carry a kind + JSON payload;
-        # anything else is a plain typed message.
-        kind = request.POST.get("kind", "text")
-        if kind not in {"text", "plan", "packing", "gmu"}:
-            kind = "text"
-        if request.limited:
-            from django.http import HttpResponse
-            return HttpResponse(
-                "<h1>Slow down 🐎</h1><p>You're posting too quickly. "
-                "Wait a minute and try again.</p>",
-                status=429,
-            )
-        payload = None
-        if kind != "text":
-            try:
-                payload = json.loads(request.POST.get("payload", ""))
-            except (json.JSONDecodeError, TypeError):
-                kind = "text"
-            if not isinstance(payload, dict):
-                kind, payload = "text", None
-        if text:
-            message = Message.objects.create(
-                group=group, user=request.user, text=text, kind=kind, payload=payload,
-            )
-            if group:
-                send_group_notification_async(
-                    group,
-                    request.user,
-                    "posted a message",
-                    [message.text[:500]],
-                    group_url=reverse("group_chat_group", args=[group.pk]),
-                    request=request,
-                )
-        if group:
-            return redirect("group_chat_group", group_id=group.pk)
-        return redirect("group_chat")
+        return _handle_chat_post(request, group)
 
     messages = Message.objects.select_related("user").filter(group=group).order_by("-created_at")[:50]
     liked_ids = set(
@@ -251,12 +261,7 @@ def message_edit_view(request, message_id):
 
 def ratelimited_view(request, exception):
     """Friendly 429 page shown when a user posts/likes too fast."""
-    from django.http import HttpResponse
-    return HttpResponse(
-        "<h1>Slow down 🐎</h1><p>You're doing that too quickly. "
-        "Wait a minute and try again.</p>",
-        status=429,
-    )
+    return _rate_limited_response()
 
 
 @login_required
@@ -289,6 +294,38 @@ def group_join_view(request, group_id):
     return redirect("group_chat_group", group_id=group.pk)
 
 
+def announce_new_member(group, actor, member, request, welcome_body):
+    """Post the "👋 ... was added" system message and fire the welcome email.
+
+    Shared by group_create_view (initial members) and group_detail_view
+    (creator adds someone later); welcome_body is the email's second line.
+    """
+    # Post a chat message announcing the new member so the
+    # whole group sees who arrived, even without email.
+    Message.objects.create(
+        group=group,
+        user=actor,
+        text=f"👋 {actor_display(member)} was added to the group by "
+             f"{actor_display(actor)} — say hi!",
+        kind="system",
+    )
+    if member.email:
+        send_group_notification_async(
+            group,
+            actor,
+            "welcomed you to the group",
+            [welcome_body, "Open the chat and say hi!"],
+            group_url=reverse("group_chat_group", args=[group.pk]),
+            request=request,
+        )
+
+
+def _add_group_member(request, group, user, welcome_body):
+    """Add a user to a group, then announce it via announce_new_member."""
+    group.members.add(user)
+    announce_new_member(group, request.user, user, request, welcome_body)
+
+
 @login_required
 def group_create_view(request):
     """Create a new group and pick the users to add."""
@@ -297,27 +334,13 @@ def group_create_view(request):
         if form.is_valid():
             group = form.save()
             for member in group.members.exclude(pk=request.user.pk):
-                # Announcement message for each initial member.
-                Message.objects.create(
-                    group=group,
-                    user=request.user,
-                    text=f"👋 {actor_display(member)} was added to the group by "
-                         f"{actor_display(request.user)} — say hi!",
-                    kind="system",
+                _add_group_member(
+                    request,
+                    group,
+                    member,
+                    f"{actor_display(request.user)} created \u201c{group.name}\u201d "
+                    "and added you as one of its first members.",
                 )
-                if member.email:
-                    send_group_notification_async(
-                        group,
-                        request.user,
-                        "welcomed you to the group",
-                        [
-                            f"{actor_display(request.user)} created \u201c{group.name}\u201d "
-                            "and added you as one of its first members.",
-                            "Open the chat and say hi!",
-                        ],
-                        group_url=reverse("group_chat_group", args=[group.pk]),
-                        request=request,
-                    )
             return redirect("group_chat_group", group_id=group.pk)
     else:
         form = ChatGroupForm(current_user=request.user)
@@ -332,41 +355,29 @@ def group_detail_view(request, group_id):
         return redirect("group_chat")
 
     if request.method == "POST":
-        if request.POST.get("action") == "delete":
+        action = request.POST.get("action")
+        if action == "delete":
             # Creator-only group deletion. Cascades to the group's messages.
             if group.created_by == request.user:
                 group.delete()
                 return redirect("group_list")
             return redirect("group_detail", group_id=group.pk)
-        if request.POST.get("action") == "add":
+        if action == "add":
             user_id = request.POST.get("user_id")
             if user_id and group.created_by == request.user:
-                user = get_object_or_404(User, pk=user_id)
+                try:
+                    user = User.objects.get(pk=user_id)
+                except (User.DoesNotExist, ValueError, TypeError):
+                    return redirect("group_detail", group_id=group.pk)
                 if not group.is_member(user):
-                    group.members.add(user)
-                    # Post a chat message announcing the new member so the
-                    # whole group sees who arrived, even without email.
-                    Message.objects.create(
-                        group=group,
-                        user=request.user,
-                        text=f"👋 {actor_display(user)} was added to the group by "
-                             f"{actor_display(request.user)} — say hi!",
-                        kind="system",
+                    _add_group_member(
+                        request,
+                        group,
+                        user,
+                        f"{actor_display(request.user)} added you to "
+                        f"\u201c{group.name}\u201d — the hunt-planning crew.",
                     )
-                    if user.email:
-                                send_group_notification_async(
-                            group,
-                            request.user,
-                            "welcomed you to the group",
-                            [
-                                f"{actor_display(request.user)} added you to "
-                                f"\u201c{group.name}\u201d — the hunt-planning crew.",
-                                "Open the chat and introduce yourself!",
-                            ],
-                            group_url=reverse("group_chat_group", args=[group.pk]),
-                            request=request,
-                        )
-        elif request.POST.get("action") == "remove":
+        elif action == "remove":
             user_id = request.POST.get("user_id")
             if user_id and group.created_by == request.user:
                 group.members.remove(user_id)

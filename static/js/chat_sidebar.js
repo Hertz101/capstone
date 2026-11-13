@@ -18,6 +18,13 @@
     }
   }
 
+  function setText(id, value) {
+    // Null-checked so a missing template element degrades to a skipped
+    // update instead of throwing and killing the whole sidebar script.
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
   function setEmpty(cardId, emptyId, empty) {
     const card = document.getElementById(cardId);
     const emptyEl = document.getElementById(emptyId);
@@ -29,13 +36,11 @@
   const plan = readJson("rmc_hunt_plan_v1");
   let planPayload = null;
   if (plan && plan.species) {
-    document.getElementById("planSpecies").textContent = plan.species || "—";
-    document.getElementById("planSeason").textContent = plan.season || "—";
-    document.getElementById("planMethod").textContent = plan.method || "—";
-    document.getElementById("planGmu").textContent = plan.gmu
-      ? `GMU ${plan.gmu}`
-      : "—";
-    document.getElementById("planLicense").textContent = plan.license || "—";
+    setText("planSpecies", plan.species || "—");
+    setText("planSeason", plan.season || "—");
+    setText("planMethod", plan.method || "—");
+    setText("planGmu", plan.gmu ? `GMU ${plan.gmu}` : "—");
+    setText("planLicense", plan.license || "—");
     planPayload = {
       species: plan.species || "",
       season: plan.season || "",
@@ -73,7 +78,7 @@
   const lastGmu = readJson("rmc_last_gmu_v1");
   let gmuPayload = null;
   if (lastGmu) {
-    document.getElementById("gmuCode").textContent = `GMU ${lastGmu}`;
+    setText("gmuCode", `GMU ${lastGmu}`);
     document.getElementById("gmuNote").hidden = false;
     gmuPayload = { gmu: String(lastGmu) };
   }

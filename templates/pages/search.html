@@ -30,16 +30,7 @@ Mountain Coalition{% endblock title %} {% block content %}
   <div class="list-group mb-3">
     {% for message in results.messages %}
     <a
-      {%
-      if
-      message.group
-      %}href="{% url 'group_chat_group' message.group.pk %}"
-      {%
-      else
-      %}href="{% url 'group_chat' %}"
-      {%
-      endif
-      %}
+      {% if message.group %}href="{% url 'group_chat_group' message.group.pk %}"{% else %}href="{% url 'group_chat' %}"{% endif %}
       class="list-group-item list-group-item-action"
     >
       <strong>{{ message.user.get_username }}</strong>
