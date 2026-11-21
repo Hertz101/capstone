@@ -44,41 +44,31 @@
     color: #203d2b;
 }
 
-.navbar.bg-1 .form-control {
-    min-width: 150px;
-}
-
 @media (max-width: 991.98px) {
-    .navbar.bg-1 .navbar-collapse {
-        padding-top: 1rem;
-    }
+.navbar.bg-1 .navbar-collapse {
+    padding-top: 1rem;
+}
 
-    .navbar.bg-1 .navbar-nav {
-        margin-bottom: 0.75rem;
-    }
-
-    .navbar.bg-1 form[role="search"] {
-        margin-bottom: 0.5rem;
+.navbar.bg-1 .navbar-nav {
+    margin-bottom: 0.75rem;
     }
 }
 
 
 
-/* Navbar visibility fix */
+/* Navbar stacking above page content (Leaflet map panes have z-index 400+). */
 nav.navbar {
-    display: flex !important;
     position: relative;
     z-index: 1050;
-    width: 100%;
-    min-height: 65px;
-    background-color: #203d2b !important;
-    visibility: visible !important;
-    opacity: 1 !important;
 }
 
-nav.navbar .navbar-brand,
-nav.navbar .nav-link {
-    color: #ffffff !important;
+nav.navbar .dropdown-menu {
+    z-index: 1060;
+}
+
+/* Keep the collapsed menu readable on the dark bar on narrow screens. */
+nav.navbar .navbar-collapse {
+    background-color: #203d2b;
 }
 
 nav.navbar .navbar-toggler {
@@ -87,12 +77,4 @@ nav.navbar .navbar-toggler {
 
 nav.navbar .navbar-toggler-icon {
     filter: brightness(0) invert(1);
-}
-
-nav.navbar .navbar-collapse {
-    background-color: #203d2b;
-}
-
-nav.navbar .dropdown-menu {
-    z-index: 1060;
 }

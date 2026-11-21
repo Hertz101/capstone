@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/maps.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
@@ -86,9 +87,6 @@
     <h3>Data status</h3>
     <div id="status">Loading CPW data…</div>
 
-    <h3>Selected feature</h3>
-    <div id="info">Click a mapped boundary or property.</div>
-
     <h3>Past seasons &amp; licenses</h3>
     <div class="stats-links">
       <p class="note">Official CPW reports (PDF) — previous seasons by unit:</p>
@@ -161,7 +159,10 @@
 {% endblock content %}
 
 {% block js %}
-<script src="{% static 'js/cpw-config.js' %}"></script>
+{{ block.super }}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'js/csrf.js' %}?v={{ csrf_js_mtime }}"></script>
+<script src="{% static 'js/cpw-config.js' %}?v={{ cpw_config_mtime }}"></script>
 <!-- ?v=mtime cache-buster: browsers pick up edits without a hard refresh -->
 <script src="{% static 'js/maps.js' %}?v={{ maps_js_mtime }}"></script>
 {% endblock js %}

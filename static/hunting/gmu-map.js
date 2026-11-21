@@ -81,18 +81,8 @@
       zoom: 7
     });
 
-    // MapTiler base map
-    L.tileLayer(
-      `https://api.maptiler.com/maps/outdoor-v2/{z}/{x}/{y}.png?key=${encodeURIComponent(apiKey)}`,
-      {
-        tileSize: 512,
-        zoomOffset: -1,
-        maxZoom: 22,
-        attribution:
-          '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> ' +
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-      }
-    ).addTo(map);
+    // MapTiler base map (shared config in cpw-config.js)
+    window.MAPTILER_TILE_LAYER(apiKey).addTo(map);
 
     map.on("tileerror", event => {
       console.error("Map tile failed to load:", event);

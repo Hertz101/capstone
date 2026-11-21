@@ -50,7 +50,7 @@ class PageViewTests(TestCase):
                 "method": "archery",
             },
         )
-        self.assertRedirects(response, reverse("group_chat"))
+        self.assertRedirects(response, reverse("group_list"))
         profile = Profile.objects.get(user__username="hunter1")
         self.assertEqual(profile.first_name, "Adam")
         self.assertEqual(profile.city, "Denver")
@@ -65,17 +65,23 @@ class PageViewTests(TestCase):
         self.assertIn("login", response.url)
 
     def test_group_chat_url(self):
+        # A user with no groups is redirected to the group list (the old
+        # behavior rendered a listing of all ungrouped messages — a leak).
         self.client.force_login(self.user)
         response = self.client.get(reverse("group_chat"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "pages/group_chat.html")
+        self.assertRedirects(response, reverse("group_list"))
 
     def test_group_chat_post_creates_message(self):
-        from .models import Message
+        from .models import ChatGroup, Message
 
+        group = ChatGroup.objects.create(name="Solo Crew", created_by=self.user)
+        group.members.add(self.user)
         self.client.force_login(self.user)
-        response = self.client.post(reverse("group_chat"), {"text": "Anyone hunting unit 201?"})
-        self.assertRedirects(response, reverse("group_chat"))
+        response = self.client.post(
+            reverse("group_chat_group", args=[group.pk]),
+            {"text": "Anyone hunting unit 201?"},
+        )
+        self.assertRedirects(response, reverse("group_chat_group", args=[group.pk]))
         self.assertEqual(Message.objects.count(), 1)
         self.assertEqual(Message.objects.first().user, self.user)
         self.assertEqual(Message.objects.first().text, "Anyone hunting unit 201?")
@@ -88,11 +94,13 @@ class PageViewTests(TestCase):
         self.assertEqual(Message.objects.count(), 0)
 
     def test_group_chat_shows_messages(self):
-        from .models import Message
+        from .models import ChatGroup, Message
 
-        Message.objects.create(user=self.user, text="Season opens Saturday!")
+        group = ChatGroup.objects.create(name="Visible Crew", created_by=self.user)
+        group.members.add(self.user)
+        Message.objects.create(user=self.user, group=group, text="Season opens Saturday!")
         self.client.force_login(self.user)
-        response = self.client.get(reverse("group_chat"))
+        response = self.client.get(reverse("group_chat_group", args=[group.pk]))
         self.assertContains(response, "chatuser")
         self.assertContains(response, "Season opens Saturday!")
 
@@ -135,7 +143,10 @@ class GroupTests(TestCase):
         group.members.add(self.creator, self.friend)
         self.client.force_login(self.outsider)
         response = self.client.get(reverse("group_chat_group", args=[group.pk]))
-        self.assertRedirects(response, reverse("group_chat"))
+        # Redirects non-members to the group chat entry point; the outsider
+        # has no groups, so that view bounces again to the group list.
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("group_chat"))
 
     def test_member_can_post_to_group_chat(self):
         from .models import ChatGroup, Message
@@ -251,29 +262,6 @@ class ProfileViewTests(TestCase):
         self.assertEqual(Profile.objects.count(), 0)          # profile cascades
         self.assertEqual(group.members.count(), 0)            # membership gone
         self.assertEqual(ChatGroup.objects.filter(name="Lonely Crew").count(), 1)  # group survives, creator nulled
-
-    def test_blog_url(self):
-        response = self.client.get(reverse("blog"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "pages/blog.html")
-
-    def test_home_passes_animal_cards_to_template(self):
-        response = self.client.get(reverse("home"))
-        animal_cards = response.context["animal_cards"]
-
-        self.assertIsInstance(animal_cards, list)
-        self.assertTrue(len(animal_cards) > 0)
-
-        for card in animal_cards:
-            self.assertEqual(len(card), 3)
-            self.assertTrue(all(card))
-
-        # Each unique species key should be present exactly once.
-        species = [card[0] for card in animal_cards]
-        self.assertIn("Elk", species)
-        self.assertIn("Bear", species)
-        self.assertIn("Pronghorn", species)
-        self.assertEqual(species.count("Deer"), 2)
 
     def test_home_passes_no_maptiler_key(self):
         # The home page no longer renders the map, so it does not need the key.
@@ -515,54 +503,6 @@ class MessagePermissionTests(TestCase):
             response, reverse("group_chat_group", args=[self.group.pk])
         )
         self.assertFalse(Message.objects.filter(pk=self.group_message.pk).exists())
-
-
-class SearchVisibilityTests(TestCase):
-    """Site search respects membership: outsiders see pages/resources only."""
-
-    @classmethod
-    def setUpTestData(cls):
-        from django.contrib.auth.models import User
-
-        from .models import ChatGroup, Message
-
-        cls.member = User.objects.create_user("searcher", password="pw12345!")
-        cls.outsider = User.objects.create_user("searchoutsider", password="pw12345!")
-
-        cls.group = ChatGroup.objects.create(name="Elk Camp", created_by=cls.member)
-        cls.group.members.add(cls.member)
-        Message.objects.create(
-            group=cls.group, user=cls.member, text="secret elk spot coordinates"
-        )
-        Message.objects.create(user=cls.member, text="public elk advice")
-
-    def test_anonymous_search_finds_static_results_only(self):
-        response = self.client.get(reverse("search"), {"q": "elk"})
-        results = response.context["results"]
-        self.assertEqual(list(results["groups"]), [])
-        self.assertEqual(list(results["messages"]), [])
-
-    def test_non_member_does_not_see_private_group_or_messages(self):
-        self.client.force_login(self.outsider)
-        response = self.client.get(reverse("search"), {"q": "elk"})
-        results = response.context["results"]
-        self.assertEqual(list(results["groups"]), [])
-        self.assertFalse(any("secret" in m.text for m in results["messages"]))
-
-    def test_member_sees_their_groups_and_visible_messages(self):
-        self.client.force_login(self.member)
-        response = self.client.get(reverse("search"), {"q": "elk"})
-        results = response.context["results"]
-        self.assertIn(self.group, results["groups"])
-        texts = [m.text for m in results["messages"]]
-        self.assertIn("secret elk spot coordinates", texts)
-        self.assertIn("public elk advice", texts)
-
-    def test_empty_query_returns_empty_results(self):
-        self.client.force_login(self.member)
-        response = self.client.get(reverse("search"), {"q": "   "})
-        self.assertEqual(response.context["query"], "")
-        self.assertEqual(response.context["result_count"], 0)
 
 
 class ActiveMailerFallbackTests(TestCase):

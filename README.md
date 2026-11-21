@@ -20,22 +20,21 @@ checklist, and a group chat with email notifications for planning crews.
   creator-only moderation. Rate-limited to 10 posts/min and 30 likes/min.
 - **Email notifications** — members are emailed when someone posts, likes,
   joins, or is added (Gmail SMTP over port 465; console backend in dev).
-- **Search** — site-wide search over static pages, resource cards, and chat
-  content (scoped to groups the user belongs to).
+
 - **Profiles** — hunter profile with photo upload, city/state, and preferred
   hunting method; account self-deletion with password confirmation.
 
 ## Tech stack
 
-| Layer | Choice |
-|---|---|
-| Framework | Django 6.1 (Python 3.14) |
-| Database | PostgreSQL (Render) in prod, SQLite for local dev |
-| Templates | Django templates + Bootstrap + Leaflet |
-| Static/media | WhiteNoise (compressed, cache-fingerprinted) |
-| Email | Django SMTP backend via Gmail App Password |
-| Rate limiting | django-ratelimit |
-| Tests | Django TestCase (55 tests), pytest/pytest-django |
+| Layer         | Choice                                            |
+| ------------- | ------------------------------------------------- |
+| Framework     | Django 6.1 (Python 3.14)                          |
+| Database      | PostgreSQL (Render) in prod, SQLite for local dev |
+| Templates     | Django templates + Bootstrap + Leaflet            |
+| Static/media  | WhiteNoise (compressed, cache-fingerprinted)      |
+| Email         | Django SMTP backend via Gmail App Password        |
+| Rate limiting | django-ratelimit                                  |
+| Tests         | Django TestCase (55 tests), pytest/pytest-django  |
 
 ## Local development
 
@@ -66,14 +65,14 @@ python manage.py test pages
 ```
 
 Covers page routes, signup/profile flows, account deletion cascades,
-group membership gating, message like/edit/delete permissions, search
-visibility scoping, resource-card data integrity, and the email-backend
+group membership gating, message like/edit/delete permissions,
+resource-card data integrity, and the email-backend
 fallback logic.
 
 ## Deployment (Render)
 
 1. **PostgreSQL**: create a Render Postgres instance in the same region as
-   the web service; copy the *Internal Database URL*.
+   the web service; copy the _Internal Database URL_.
 2. **Web Service**: connect the GitHub repo. Build command:
    ```
    pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput
@@ -84,17 +83,17 @@ fallback logic.
    ```
 3. **Environment variables**:
 
-   | Key | Purpose |
-   |---|---|
-   | `DJANGO_SECRET_KEY` | Required — settings fail fast without it |
-   | `DJANGO_ALLOWED_HOSTS` | Bare hostname, e.g. `rmcplanner.onrender.com` |
-   | `DATABASE_URL` | The Postgres Internal Database URL |
-   | `SITE_BASE_URL` | `https://<app>.onrender.com` (links in emails) |
-   | `MAPTILER_API_KEY` | Map tile provider key |
-   | `EMAIL_PORT` | `465` (Render free tier blocks outbound 587) |
-   | `EMAIL_USE_SSL` | `true` (port 465 is implicit SSL) |
-   | `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | Gmail + App Password |
-   | `DEFAULT_FROM_EMAIL` | Sender shown on notifications |
+   | Key                                       | Purpose                                        |
+   | ----------------------------------------- | ---------------------------------------------- |
+   | `DJANGO_SECRET_KEY`                       | Required — settings fail fast without it       |
+   | `DJANGO_ALLOWED_HOSTS`                    | Bare hostname, e.g. `rmcplanner.onrender.com`  |
+   | `DATABASE_URL`                            | The Postgres Internal Database URL             |
+   | `SITE_BASE_URL`                           | `https://<app>.onrender.com` (links in emails) |
+   | `MAPTILER_API_KEY`                        | Map tile provider key                          |
+   | `EMAIL_PORT`                              | `465` (Render free tier blocks outbound 587)   |
+   | `EMAIL_USE_SSL`                           | `true` (port 465 is implicit SSL)              |
+   | `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | Gmail + App Password                           |
+   | `DEFAULT_FROM_EMAIL`                      | Sender shown on notifications                  |
 
    Do **not** set `DJANGO_DEBUG` in production.
 

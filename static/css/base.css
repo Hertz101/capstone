@@ -11,9 +11,6 @@ main {
   flex-grow: 1;
 }
 
-@media (max-width: 767.98px) {
-  .resource-grid { grid-template-columns: 1fr; }
-}
 /* Group chat like button */
 .chat-like-row { display: flex; }
 .chat-like-btn {

@@ -1,0 +1,378 @@
+/* Hunt Planner page styles (loaded only by templates/hunting/planner.html).
+   Split out of home.css so every other page stops shipping this. */
+
+.hunt-page {
+    padding-bottom: 4rem;
+  }
+.btn-hunt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem;
+    border: 1px solid var(--hunt-green);
+    border-radius: 10px;
+    background: var(--hunt-green);
+    color: #fff;
+    font-weight: 750;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+.btn-hunt:hover {
+    background: var(--hunt-green-dark);
+    border-color: var(--hunt-green-dark);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(23, 47, 32, 0.2);
+  }
+.btn-hunt:focus-visible,
+  .hunt-choice:focus-visible {
+    outline: 3px solid var(--hunt-gold);
+    outline-offset: 3px;
+  }
+.planner-card {
+    overflow: hidden;
+    border: 1px solid var(--hunt-border);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 12px 38px rgba(31, 52, 34, 0.07);
+  }
+.planner-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--hunt-border);
+    background: linear-gradient(120deg, #f5f8f2, #fff);
+  }
+.planner-header h3 {
+    margin: 0 0 0.35rem;
+    color: var(--hunt-green-dark);
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+.planner-header p {
+    margin: 0;
+    color: var(--hunt-muted);
+    font-size: 0.93rem;
+  }
+.planner-body {
+    padding: 2rem;
+  }
+.hunt-step {
+    padding: 0 0 2rem;
+    margin: 0 0 2rem;
+    border-bottom: 1px solid #e9eee7;
+    scroll-margin-top: 1.5rem;
+  }
+.hunt-step:last-of-type {
+    margin-bottom: 1.5rem;
+  }
+.step-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    margin-bottom: 0.45rem;
+  }
+.hunt-number {
+    display: inline-flex;
+    flex: 0 0 36px;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: var(--hunt-green-light);
+    color: var(--hunt-green);
+    font-size: 0.95rem;
+    font-weight: 850;
+  }
+.step-heading h4 {
+    margin: 0;
+    padding-top: 0.25rem;
+    color: var(--hunt-green-dark);
+    font-size: 1.12rem;
+    font-weight: 800;
+  }
+.step-description {
+    margin: 0 0 1.15rem 2.95rem;
+    color: var(--hunt-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+/* Image selection cards */
+  .hunt-choice {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 185px;
+    padding: 8px;
+    overflow: hidden;
+    border: 2px solid var(--hunt-border);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--hunt-text);
+    cursor: pointer;
+    text-align: left;
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+  }
+.hunt-choice:hover {
+    border-color: #91a78f;
+    background: #fafcf9;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgba(31, 52, 34, 0.08);
+  }
+.hunt-choice img {
+    display: block;
+    width: 100%;
+    height: 135px;
+    flex: 1 0 135px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #e8ede6;
+  }
+.hunt-choice-label {
+    display: block;
+    padding: 11px 5px 5px;
+    font-size: 0.94rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+.hunt-choice.selected {
+    border-color: var(--hunt-green);
+    background: var(--hunt-green-light);
+    box-shadow: 0 0 0 3px rgba(36, 69, 46, 0.12);
+  }
+.hunt-choice.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--hunt-green);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 900;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+.choice-grid > div {
+    display: flex;
+  }
+/* Inputs */
+  .hunt-page .form-select,
+  .hunt-page .form-control {
+    min-height: 48px;
+    border: 1px solid #d4ded2;
+    border-radius: 10px;
+    background-color: #fff;
+    color: var(--hunt-text);
+  }
+.hunt-page .form-select:focus,
+  .hunt-page .form-control:focus {
+    border-color: #78967a;
+    box-shadow: 0 0 0 0.22rem rgba(36, 69, 46, 0.12);
+  }
+.hunt-page .form-label {
+    color: var(--hunt-green-dark);
+    font-weight: 750;
+  }
+/* Map */
+  .map-instructions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+    color: var(--hunt-muted);
+    font-size: 0.88rem;
+  }
+.map-instructions span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+.map-search-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+  }
+.map-search-row .form-control {
+    min-width: 0;
+  }
+#gmuMap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 440px;
+    min-height: 340px;
+    overflow: hidden;
+    border: 1px solid var(--hunt-border);
+    border-radius: 14px;
+    background: #e9eee7;
+  }
+#gmuMapStatus {
+    min-height: 1.5rem;
+    margin-top: 0.7rem;
+    color: var(--hunt-muted);
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+.selected-gmu-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid #d7e5d4;
+    border-radius: 12px;
+    background: var(--hunt-green-light);
+  }
+.selected-gmu-label {
+    color: var(--hunt-muted);
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+#selectedGMU {
+    margin-top: 0.2rem;
+    color: var(--hunt-green-dark);
+    font-size: 1.2rem;
+    font-weight: 850;
+  }
+.gmu-pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--hunt-green);
+    font-size: 1.15rem;
+  }
+.cpw-link {
+    display: inline-block;
+    margin-top: 0.85rem;
+    color: var(--hunt-green);
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+.cpw-link:hover {
+    color: var(--hunt-green-dark);
+    text-decoration: underline;
+  }
+/* License guidance */
+  #licenseInfo {
+    border: 1px solid #d7e5d4;
+    border-radius: 12px;
+    background: #f2f7ef;
+    color: var(--hunt-text);
+  }
+#licenseInfo .alert-heading {
+    color: var(--hunt-green-dark);
+    font-weight: 800;
+  }
+#licenseLink {
+    color: var(--hunt-green);
+    font-weight: 750;
+  }
+/* Results */
+  #huntResults {
+    padding: 1.25rem;
+    border: 1px solid var(--hunt-border);
+    border-radius: 14px;
+    background: #f8faf6;
+    scroll-margin-top: 1.5rem;
+  }
+#huntResults h3 {
+    margin-bottom: 1rem;
+    color: var(--hunt-green-dark);
+    font-size: 1.35rem;
+    font-weight: 850;
+  }
+#huntSummary {
+    overflow: hidden;
+    border-radius: 10px;
+  }
+#huntSummary .list-group-item {
+    padding: 0.95rem 1rem;
+    border-color: #e5ebe2;
+    overflow-wrap: anywhere;
+  }
+.planner-disclaimer {
+    margin-top: 1.1rem;
+    color: var(--hunt-muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+/* Image choice cards (was misnamed footer.css — these styles belong to the
+   planner's species/method cards, not to the site footer). */
+.hunt-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 2px solid #dee2e6;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.hunt-card img {
+  display: block;
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.hunt-card span {
+  display: block;
+  padding: 12px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.hunt-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.12);
+}
+
+.hunt-card.selected {
+  border-color: #198754;
+  box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
+}
+
+.hunt-card.selected span {
+  background: #eaf5ee;
+  color: #146c43;
+}
+
+.hunt-card:focus-visible {
+  outline: 3px solid #0d6efd;
+  outline-offset: 3px;
+}
+
+@media (max-width: 576px) {
+  .hunt-card img {
+    height: 115px;
+  }
+
+  .hunt-card span {
+    padding: 9px;
+    font-size: 0.95rem;
+  }
+}

@@ -43,22 +43,27 @@ def _static_mtime(asset_path):
         return 1
 
 
+def _get_visible_message(request, message_id):
+    """Fetch a message and apply the group-membership invariant.
+
+    Returns (message, back_url, visible). The membership guard lives here —
+    the security rule is enforced once, not re-typed per view. Callers decide
+    the rejection shape: silent redirect for form posts, 403 JSON for AJAX.
+    """
+    message = get_object_or_404(Message.objects.select_related("group"), pk=message_id)
+    back = reverse("group_chat")
+    visible = True
+    if message.group:
+        visible = message.group.is_member(request.user)
+        back = reverse("group_chat_group", args=[message.group.pk])
+    return message, back, visible
+
+
 def home_view(request):
-    animal_cards = [
-        ("Elk", "img/elk.jpeg", "Elk"),
-        ("Deer", "img/mule.jpeg", "Mule Deer"),
-        ("Deer", "img/whitetail.jpeg", "Whitetail Deer"),
-        ("Bear", "img/bear.jpeg", "Bear"),
-        ("Pronghorn", "img/pronghorn.jpeg", "Pronghorn"),
-    ]
-
-    return render(request, "pages/home.html", {
-        "animal_cards": animal_cards,
-    })
+    return render(request, "pages/home.html")
 
 
-def tools_view(request):
-    return render(request, "pages/tools.html")
+
 
 
 def maps_view(request):
@@ -69,7 +74,13 @@ def maps_view(request):
     }
     if request.user.is_authenticated:
         context["chat_groups"] = request.user.chat_groups.all()
-    context["maps_js_mtime"] = _static_mtime("js/maps.js")
+    # Cache-busters: browsers pick up edits to these scripts without a hard
+    # refresh. Needed on every script the map page loads — a stale cached
+    # cpw-config.js next to a fresh maps.js breaks the tile layer.
+    for name, path in (("maps_js_mtime", "js/maps.js"),
+                       ("cpw_config_mtime", "js/cpw-config.js"),
+                       ("csrf_js_mtime", "js/csrf.js")):
+        context[name] = _static_mtime(path)
     return render(request, "pages/maps.html", context)
 
 
@@ -80,8 +91,7 @@ def your_trip_view(request):
     })
 
 
-def blog_view(request):
-    return render(request, "pages/blog.html")
+
 
 
 @login_required
@@ -93,6 +103,9 @@ def _handle_chat_post(request, group):
     anything else is a plain typed message. Invalid payloads degrade to text.
     """
     text = request.POST.get("text", "").strip()
+    # The model's max_length isn't enforced by SQLite for raw POSTs (no form
+    # validation here), so truncate server-side. Matches the edit path's limit.
+    text = text[:2000]
     kind = request.POST.get("kind", "text")
     if kind not in {"text", "plan", "packing", "gmu"}:
         kind = "text"
@@ -142,7 +155,10 @@ def group_chat_view(request, group_id=None):
         first_group = request.user.chat_groups.order_by("name").first()
         return redirect("group_chat_group", group_id=first_group.pk)
     else:
-        group = None
+        # No group and no memberships: send the user to the group list.
+        # Previously this fell through to a listing of messages with
+        # group=NULL, which leaked those messages to everyone.
+        return redirect("group_list")
 
     sidebar_mtime = _static_mtime("js/chat_sidebar.js")
 
@@ -175,32 +191,35 @@ def message_like_view(request, message_id):
     in place without a page reload. Messages with no group are only
     likeable by anyone signed in; group messages by members only.
     """
-    message = get_object_or_404(Message.objects.select_related("group"), pk=message_id)
-    if message.group and not message.group.is_member(request.user):
+    message, back, visible = _get_visible_message(request, message_id)
+    if not visible:
         return JsonResponse({"error": "not a member"}, status=403)
 
     if request.limited:
         return JsonResponse({"error": "slow down"}, status=429)
 
-    if request.method == "POST":
-        if message.liked_by.filter(pk=request.user.pk).exists():
-            message.liked_by.remove(request.user)
-            liked = False
-        else:
-            message.liked_by.add(request.user)
-            liked = True
-            if message.group:
-                send_group_notification_async(
-                    message.group,
-                    request.user,
-                    "liked a message",
-                    [f"\u201c{message.text[:200]}\u201d by {actor_display(message.user)}"],
-                    group_url=reverse("group_chat_group", args=[message.group.pk]),
-                    request=request,
-                )
-    else:
-        liked = message.liked_by.filter(pk=request.user.pk).exists()
+    # The toggle is POST-only (the chat JS always POSTs). Rejecting other
+    # methods makes the state change explicit and keeps GET read-only.
+    if request.method != "POST":
+        return JsonResponse({"error": "method not allowed"}, status=405)
 
+    if message.liked_by.filter(pk=request.user.pk).exists():
+        message.liked_by.remove(request.user)
+        liked = False
+    else:
+        message.liked_by.add(request.user)
+        liked = True
+        if message.group:
+            send_group_notification_async(
+                message.group,
+                request.user,
+                "liked a message",
+                [f"\u201c{message.text[:200]}\u201d by {actor_display(message.user)}"],
+                group_url=reverse("group_chat_group", args=[message.group.pk]),
+                request=request,
+            )
+    # Re-read the count after the write so a rapid double-click (or
+    # concurrent tab) can't return a stale total.
     return JsonResponse({"liked": liked, "count": message.liked_by.count()})
 
 
@@ -210,12 +229,9 @@ def message_delete_view(request, message_id):
 
     Silent by design — deleting must not email the group.
     """
-    message = get_object_or_404(Message.objects.select_related("group"), pk=message_id)
-    back = reverse("group_chat")
-    if message.group:
-        if not message.group.is_member(request.user):
-            return redirect("group_chat")
-        back = reverse("group_chat_group", args=[message.group.pk])
+    message, back, visible = _get_visible_message(request, message_id)
+    if not visible:
+        return redirect(back)
 
     is_author = message.user_id == request.user.pk
     is_creator = message.group and message.group.created_by_id == request.user.pk
@@ -239,12 +255,9 @@ def message_edit_view(request, message_id):
     Shared cards (plan/packing/gmu) aren't editable — their content comes
     from the payload, not the text. Silent: no notification email.
     """
-    message = get_object_or_404(Message.objects.select_related("group"), pk=message_id)
-    back = reverse("group_chat")
-    if message.group:
-        if not message.group.is_member(request.user):
-            return redirect("group_chat")
-        back = reverse("group_chat_group", args=[message.group.pk])
+    message, back, visible = _get_visible_message(request, message_id)
+    if not visible:
+        return redirect(back)
 
     if (
         request.method == "POST"
@@ -276,10 +289,17 @@ def group_list_view(request):
 
 
 @login_required
+@ratelimit(key="user", rate="10/m", method="POST", block=False)
 def group_join_view(request, group_id):
-    """Join a group from the group list page."""
+    """Join a group from the group list page.
+
+    Rate-limited because joining fires a notification email to every
+    member — without it, rapid join/leave cycling could flood inboxes.
+    """
     group = get_object_or_404(ChatGroup, pk=group_id)
     if request.method == "POST":
+        if request.limited:
+            return _rate_limited_response("You're joining groups too quickly.")
         newly_added = not group.is_member(request.user)
         group.members.add(request.user)
         if newly_added and request.user.email:
@@ -380,7 +400,16 @@ def group_detail_view(request, group_id):
         elif action == "remove":
             user_id = request.POST.get("user_id")
             if user_id and group.created_by == request.user:
-                group.members.remove(user_id)
+                # Coerce/validate the raw pk so garbage input can't 500, and
+                # keep the creator in their own group — otherwise the group
+                # becomes orphaned (created_by is SET_NULL) with no one able
+                # to manage it.
+                try:
+                    target = User.objects.get(pk=user_id)
+                except (User.DoesNotExist, ValueError, TypeError):
+                    target = None
+                if target and target.pk != group.created_by_id:
+                    group.members.remove(target)
         return redirect("group_detail", group_id=group.pk)
 
     non_members = User.objects.exclude(pk__in=group.members.all())
@@ -413,53 +442,6 @@ def resource_view(request):
         "resources": resources,
     })
 
-def search_view(request):
-    """Site-wide search: chat groups, chat messages the user can see,
-    resource cards, and static pages. Safe for anonymous users."""
-    query = (request.GET.get("q") or "").strip()
-    results = {"groups": [], "messages": [], "resources": [], "pages": []}
-
-    if query:
-        # Static pages are always searchable.
-        pages_catalog = [
-            ("Home", "home"), ("Hunting Map", "maps"),
-            ("Your Trip Checklist", "your_trip"), ("Resources", "resource"),
-            ("Blog", "blog"), ("Group Chat", "group_chat"),
-        ]
-        results["pages"] = [
-            (label, name) for label, name in pages_catalog
-            if query.lower() in label.lower()
-        ]
-
-        # Resource cards match on title/body.
-        results["resources"] = [
-            card for card in RESOURCE_CARDS
-            if query.lower() in card.get("title", "").lower()
-            or query.lower() in card.get("body", "").lower()
-        ]
-
-        if request.user.is_authenticated:
-            # Only groups the user belongs to.
-            results["groups"] = request.user.chat_groups.filter(
-                name__icontains=query
-            )
-            # Only messages in groups the user belongs to (or global chat).
-            visible_groups = request.user.chat_groups.all()
-            results["messages"] = (
-                Message.objects.select_related("user", "group")
-                .filter(Q(group__in=visible_groups) | Q(group__isnull=True))
-                .filter(text__icontains=query)
-                .order_by("-created_at")[:25]
-            )
-
-    return render(request, "pages/search.html", {
-        "query": query,
-        "results": results,
-        "result_count": (len(results["groups"]) + len(results["messages"])
-                         + len(results["resources"]) + len(results["pages"])),
-    })
-
-
 def logged_out_view(request):
     """Friendly "see you next time" page shown after logging out."""
     return render(request, "registration/logged_out.html")
@@ -471,7 +453,9 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("group_chat")
+            # New users have no groups yet, so send them to the group list
+            # (group_chat would just bounce there anyway).
+            return redirect("group_list")
     else:
         form = SignupForm()
     return render(request, "registration/signup.html", {"form": form})

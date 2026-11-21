@@ -75,7 +75,7 @@ Legend: PASS / FAIL / BLOCKED. Record actual result and a note for any FAIL.
 | ID | Title | Steps | Expected Result | Priority | Actual / Status |
 |----|-------|-------|-----------------|----------|-----------------|
 | PUB-01 | Home page | Open `/` | Animal cards render (Elk, Mule Deer, Whitetail, Bear, Pronghorn) with images | High | |
-| PUB-02 | Tools page | Open `/tools/` | Renders without error | Low | |
+| PUB-02 | ~~Tools page~~ removed — route retired | — | — | — | |
 | PUB-03 | Blog page | Open `/blog/` | Renders without error | Low | |
 | PUB-04 | Your Trip checklist | Open `/your_trip/` | Checklist items render grouped; ticking items persists (localStorage or server — confirm intended behavior) | Medium | |
 | PUB-05 | Resources page | Open `/resource/` | All resource cards render; links resolve to real URLs; PDFs download (server logs a warning for any missing PDF) | Medium | |
@@ -206,7 +206,7 @@ Roles: **Anonymous**, **Authenticated regular user**, **Group member (non-creato
 
 | ID | Scenario | Expected |
 |----|----------|----------|
-| ANON-01 | Visits every public page (`/`, `/tools/`, `/maps/`, `/your_trip/`, `/blog/`, `/resource/`) | All render; no login prompts except on protected features |
+| ANON-01 | Visits every public page (`/`, `/maps/`, `/your_trip/`, `/resource/`) | All render; no login prompts except on protected features |
 | ANON-02 | Deep-links to protected page (`/group_chat/`, `/groups/`, `/profile/`, `/profile/delete/`) | 302 → login page with `?next=` returning to the original page after login |
 | ANON-03 | POSTs directly to protected endpoints (chat message, group join/create) via curl | Redirected/blocked by login_required before any DB write |
 | ANON-04 | Maps page: clicks units, tries "Share to group" (if button present) | Share control absent or redirects to login — no group dropdown |

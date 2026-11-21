@@ -277,27 +277,14 @@
 {% endblock content %} {% block extra_css %} {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/group_chat.css' %}" />
 {% endblock extra_css %} {% block js %} {{ block.super }}
+<script src="{% static 'js/csrf.js' %}"></script>
 <script src="{% static 'js/chat_sidebar.js' %}?v={{ chat_sidebar_mtime }}"></script>
 <script>
   // Like buttons: toggle via AJAX, update count/state in place.
   document.querySelectorAll(".chat-like-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const csrf = document.querySelector("input[name=csrfmiddlewaretoken]");
-      const token =
-        csrf?.value ||
-        document.cookie
-          .split(";")
-          .map((c) => c.trim())
-          .find((c) => c.startsWith("csrftoken="))
-          ?.split("=")[1];
-      if (!token) return;
       try {
-        const resp = await fetch(btn.dataset.likeUrl, {
-          method: "POST",
-          headers: { "X-CSRFToken": token, "X-Requested-With": "XMLHttpRequest" },
-        });
-        if (!resp.ok) throw new Error("HTTP " + resp.status);
-        const data = await resp.json();
+        const data = await postJSON(btn.dataset.likeUrl);
         btn.classList.toggle("liked", data.liked);
         btn.setAttribute("aria-pressed", String(data.liked));
         btn.querySelector(".chat-like-count").textContent = data.count;
@@ -328,7 +315,7 @@
       cancel.addEventListener("click", () => window.location.reload());
       form.appendChild(cancel);
 
-      form.addEventListener("submit", () => {
+      form.addEventListener("submit", (event) => {
         input.value = input.value.trim();
         if (!input.value || input.value === original) {
           event.preventDefault();

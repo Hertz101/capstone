@@ -366,17 +366,7 @@ async function initMap() {
   } catch (e) {
     /* stats are optional */
   }
-  L.tileLayer(
-    `https://api.maptiler.com/maps/outdoor-v2/{z}/{x}/{y}.png?key=${encodeURIComponent(apiKey)}`,
-    {
-      tileSize: 512,
-      zoomOffset: -1,
-      maxZoom: 22,
-      attribution:
-        '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> ' +
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-    },
-  ).addTo(map);
+  window.MAPTILER_TILE_LAYER(apiKey).addTo(map);
 
   for (const key of Object.keys(layers)) {
     document.getElementById(key).addEventListener("change", async (e) => {
@@ -762,33 +752,20 @@ if (statShareBtn) {
         if (!lastGmu || statShareBtn.disabled) return;
         const text = buildShareText(lastGmu);
         if (!text) return;
-        const csrf = document.querySelector("input[name=csrfmiddlewaretoken]");
-        const token = csrf?.value || document.cookie.split(";").map(c => c.trim())
-          .find(c => c.startsWith("csrftoken="))?.split("=")[1];
-        if (!token) return; // no token available — bail rather than fail the POST
         try {
-          const resp = await fetch(item.dataset.chatUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-              "X-Requested-With": "XMLHttpRequest",
-              "X-CSRFToken": token,
-            },
-            body: new URLSearchParams({
+          await postJSON(
+            item.dataset.chatUrl,
+            new URLSearchParams({
               text,
               kind: "gmu",
               payload: JSON.stringify({ gmu: lastGmu }),
             }),
-          });
-          if (resp.ok) {
-            // Land on the chat that received the share; ?gmu= re-triggers
-            // the highlight when the visitor clicks the unit link.
-            window.location.href = item.dataset.chatUrl + (item.dataset.chatUrl.includes("?") ? "&" : "?") + "gmu=" + encodeURIComponent(lastGmu);
-          } else {
-            alert("Couldn't share to chat (HTTP " + resp.status + "). Try again.");
-          }
+          );
+          // Land on the chat that received the share; ?gmu= re-triggers
+          // the highlight when the visitor clicks the unit link.
+          window.location.href = item.dataset.chatUrl + (item.dataset.chatUrl.includes("?") ? "&" : "?") + "gmu=" + encodeURIComponent(lastGmu);
         } catch (err) {
-          alert("Couldn't reach the chat: " + err.message);
+          alert("Couldn't share to chat: " + err.message);
         }
       });
     });

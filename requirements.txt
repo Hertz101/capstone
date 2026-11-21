@@ -1,5 +1,7 @@
 # Pinned to versions verified against local Python 3.14 during development.
 # Upgrade deliberately: bump a version, run tests, commit together.
+#
+# === Direct dependencies ===
 Django==6.1.3
 python-dotenv==1.2.4
 pdfplumber==0.11.10
@@ -11,11 +13,20 @@ dj-database-url==3.1.2
 psycopg==3.3.9
 psycopg-binary==3.3.9
 
-# Dev/test only — harmless in production builds, kept pinned for reproducibility.
+# === Dev/test only — harmless in production builds. ===
 pytest==9.2.0
 pytest-django==4.14.0
 
-# Transitive deps of the above, pinned for fully reproducible builds.
+# === Transitive dependencies (of the direct deps above), pinned for fully
+# reproducible builds. Regenerate with: pip freeze (diff against this list). ===
+#   Django → asgiref, sqlparse, tzdata
+#   pdfplumber → pdfminer.six, pypdfium2
+#   pdfminer.six → charset-normalizer, cryptography (+cffi, pycparser), idna, requests
+#   cryptography → cffi (+pycparser)
+#   pdfminer.six[syntax] / extras → beautifulsoup4 (+soupsieve), babel, defusedxml
+#   pytest → iniconfig, packaging, pluggy
+#   jsonschema (via pytest-django tooling) → attrs, referencing (+rpds-py),
+#     jsonschema-specifications
 asgiref==3.13.0
 sqlparse==0.6.1
 tzdata==2026.3

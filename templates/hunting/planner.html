@@ -3,6 +3,10 @@
 
 {% block title %}Colorado Hunt Planner | Plan Your Hunt{% endblock title %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/planner.css' %}">
+{% endblock extra_css %}
+
 {% block content %}
 
 <div class="container hunt-page py-4">
@@ -367,7 +371,8 @@
 
 {% block js %}
   {{ block.super }}
-  <script src="{% static 'js/cpw-config.js' %}"></script>
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+  <script src="{% static 'js/cpw-config.js' %}?v=2"></script>
   <script src="{% static 'hunting/hunt-planner.js' %}"></script>
   <script src="{% static 'hunting/gmu-map.js' %}"></script>
 

@@ -22,12 +22,6 @@
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
     {% block extra_css %}{% endblock extra_css %}
 
-    <!-- Leaflet CSS -->
-    <link
-        rel="stylesheet"
-        href="{% static 'vendor/leaflet/leaflet.css' %}"
-    >
-
 </head>
 <body>
 
@@ -45,8 +39,7 @@
     <!-- Bootstrap JavaScript (self-hosted — the CDN copy was 404ing in some environments) -->
     <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
 
-    <!-- Leaflet JavaScript -->
-    <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+    {% block vendor_js %}{% endblock vendor_js %}
 
     {% block js %}
     {% endblock js %}
