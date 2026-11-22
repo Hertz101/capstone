@@ -35,6 +35,14 @@ def _deliver(email):
     backoff and a fresh connection usually clears it.
     """
     import time
+    # Include the live SMTP config in the failure log — on hosts that block
+    # egress ports (Render free blocks 587), the first line of diagnosis is
+    # which port/SSL mode the process is actually using.
+    cfg = settings.MAILERS.get("default", {}).get("OPTIONS", {})
+    cfg_note = (
+        f"[host={cfg.get('host')} port={cfg.get('port')} "
+        f"use_ssl={cfg.get('use_ssl')} use_tls={cfg.get('use_tls')}]"
+    )
     for attempt in range(3):
         try:
             with _active_mailer() as connection:
@@ -45,10 +53,14 @@ def _deliver(email):
         except OSError as exc:
             if attempt == 2:
                 logger.error(
-                    "group notification email failed after 3 attempts: %s", exc
+                    "group notification email failed after 3 attempts %s: %s",
+                    cfg_note, exc,
                 )
                 return
             time.sleep(1.5 * (attempt + 1))
+        else:
+            logger.info("group notification email sent %s to %d recipient(s)",
+                        cfg_note, len(email.to))
     
 
 def _recipients_for(group, actor):
